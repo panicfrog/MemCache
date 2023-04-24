@@ -48,6 +48,7 @@
 cmake-build-*/
 build/
 build-ios/
+install-ios/
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml

@@ -3,7 +3,7 @@
 //
 
 #include <catch2/catch.hpp>
-#include "../include/MemCache.hpp"
+#include "../src/MemCache.hpp"
 
 TEST_CASE("Test MemCache int storage and retrieval", "[mem_cache]") {
 MemCache cache;

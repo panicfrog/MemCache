@@ -8,6 +8,9 @@
 #define CACHE_TYPE_STRING 4
 #define CACHE_TYPE_UINT8_ARRAY 5
 
+using nonstd::optional;
+using nonstd::nullopt;
+
 MemCache::MemCache() {
     sqlite3_open(":memory:", &db);
     sqlite3_exec(db, "CREATE TABLE cache (key TEXT PRIMARY KEY, type INTEGER, value BLOB);", nullptr, nullptr, nullptr);
@@ -51,7 +54,7 @@ int MemCache::put(const std::string& key, const T& value) {
 }
 
 template <CacheValue T>
-std::optional<T> MemCache::get(const std::string& key) {
+optional<T> MemCache::get(const std::string& key) {
     std::string sql = "SELECT type, value FROM cache WHERE key = ?;";
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -95,11 +98,11 @@ std::optional<T> MemCache::get(const std::string& key) {
                 return value;
             }
         } else {
-            return std::nullopt;
+            return nullopt;
         }
     } else {
         sqlite3_finalize(stmt);
-        return std::nullopt;
+        return nullopt;
     }
 }
 
@@ -116,7 +119,7 @@ int MemCache::put_json(const std::string& key, const std::string& json) {
     return result;
 }
 
-std::optional<std::string> MemCache::get_json(const std::string& key) {
+optional<std::string> MemCache::get_json(const std::string& key) {
     std::string sql = "SELECT json FROM json_cache WHERE key = ?;";
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -131,10 +134,10 @@ std::optional<std::string> MemCache::get_json(const std::string& key) {
         return  json;
     }
     sqlite3_finalize(stmt);
-    return std::nullopt;
+    return nullopt;
 }
 
-std::optional<std::string>  MemCache::query_json(const std::string& key, const std::string& json_path) {
+optional<std::string>  MemCache::query_json(const std::string& key, const std::string& json_path) {
     std::string sql = "SELECT json_extract(json, ? ) FROM json_cache WHERE key = ?;";
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -147,7 +150,7 @@ std::optional<std::string>  MemCache::query_json(const std::string& key, const s
         return value;
     }
     sqlite3_finalize(stmt);
-    return std::nullopt;
+    return nullopt;
 }
 
 int MemCache::modify_json(const std::string& key, const std::string& json_path, const std::string& value) {
@@ -180,8 +183,8 @@ template int MemCache::put<double>(const std::string& key, const double& value);
 template int MemCache::put<bool>(const std::string& key, const bool& value);
 template int MemCache::put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value);
 
-template std::optional<std::string> MemCache::get<std::string>(const std::string& key);
-template std::optional<int> MemCache::get<int>(const std::string& key);
-template std::optional<double> MemCache::get<double>(const std::string& key);
-template std::optional<bool> MemCache::get<bool>(const std::string& key);
-template std::optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(const std::string& key);
+template optional<std::string> MemCache::get<std::string>(const std::string& key);
+template optional<int> MemCache::get<int>(const std::string& key);
+template optional<double> MemCache::get<double>(const std::string& key);
+template optional<bool> MemCache::get<bool>(const std::string& key);
+template optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(const std::string& key);
