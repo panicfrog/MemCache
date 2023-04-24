@@ -28,3 +28,142 @@ cmake --build .
 ```shell
 ./build_ios.sh
 ```
+
+
+```swift
+//
+//  MemCache.swift
+//  MemCacheDemo
+//
+//  Created by mac studio on 2023/4/24.
+//
+
+import Foundation
+
+final class MemCache {
+  let cache: UnsafeMutableRawPointer!
+  init() {
+    self.cache = MemCache_new()
+  }
+  
+  func getString(forKey key: String) -> String? {
+    let cKey = key.cString(using: .utf8)
+    var cValue: UnsafeMutablePointer<Int8>?
+    
+    let success = MemCache_get_string(cache, cKey, &cValue)
+    let value: String?
+    if success {
+      value = String(cString: cValue!, encoding: .utf8)
+    } else {
+      value = nil
+    }
+    return value
+  }
+  
+  func getInt32(forKey key: String) -> Int32? {
+    let cKey = key.cString(using: .utf8)
+    var value: Int32 = 0
+    let success = MemCache_get_int(cache, cKey, &value)
+    if success {
+      return value
+    } else {
+      return nil
+    }
+  }
+  
+  func getDouble(forKey key: String) -> Double? {
+    let cKey = key.cString(using: .utf8)
+    var value: Double = 0
+    let success = MemCache_get_double(cache, cKey, &value)
+    if success {
+      return value
+    } else {
+      return nil
+    }
+  }
+  
+  func getBool(forKey key: String) -> Bool? {
+    let cKey = key.cString(using: .utf8)
+    var value: Bool = true
+    let success = MemCache_get_bool(cache, cKey, &value)
+    if success {
+      return value
+    } else {
+      return nil
+    }
+  }
+  
+  func put(value: Int32, forKey key: String) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    return MemCache_put_int(cache, cKey, value)
+  }
+  
+  func put(value: Bool, forKey key: String) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    return MemCache_put_bool(cache, cKey, value)
+  }
+  
+  func put(value: Double, forKey key: String) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    return MemCache_put_double(cache, cKey, value)
+  }
+  
+  func put(value: String, forKey key: String) -> Int32 {
+    let cValue = value.cString(using: .utf8)
+    let cKey = key.cString(using: .utf8)
+    return MemCache_put_string(cache, cKey, cValue)
+  }
+  
+  func putJson(value: String, forKey key: String) -> Int32 {
+    let cValue = value.cString(using: .utf8)
+    let cKey = key.cString(using: .utf8)
+    return MemCache_put_json(cache, cKey, cValue)
+  }
+  
+  func getJson(forkey key: String) -> String? {
+    let cKey = key.cString(using: .utf8)
+    var cValue: UnsafeMutablePointer<Int8>?
+    
+    let success = MemCache_get_json(cache, cKey, &cValue)
+    let value: String?
+    if success {
+      value = String(cString: cValue!, encoding: .utf8)
+    } else {
+      value = nil
+    }
+    return value
+  }
+  
+  func queryJson(forKey key: String, with path: String) -> String? {
+    let cKey = key.cString(using: .utf8)
+    let cPath = path.cString(using: .utf8)
+    var cValue: UnsafeMutablePointer<Int8>?
+    let success = MemCache_query_json(cache, cKey, cPath, &cValue)
+    let value: String?
+    if success {
+      value = String(cString: cValue!, encoding: .utf8)
+    } else {
+      value = nil
+    }
+    return value
+  }
+  
+  func modifyJson(value: String, withPath: String, forKey key: String) -> Int32 {
+    let cValue = value.cString(using: .utf8)
+    let cPath = withPath.cString(using: .utf8)
+    let cKey = key.cString(using: .utf8)
+    return MemCache_modify_json(cache, cKey, cPath, cValue)
+  }
+  
+  func patchJson(patch: String, forKey key: String) -> Int32 {
+    let cPatch = patch.cString(using: .utf8)
+    let cKey = key.cString(using: .utf8)
+    return MemCache_patch_json(cache, cKey, cPatch)
+  }
+  
+  deinit {
+    MemCache_delete(cache)
+  }
+}
+
+```
