@@ -13,8 +13,8 @@ using nonstd::nullopt;
 
 MemCache::MemCache() {
     sqlite3_open(":memory:", &db);
-    sqlite3_exec(db, "CREATE TABLE cache (key TEXT PRIMARY KEY, type INTEGER, value BLOB);", nullptr, nullptr, nullptr);
-    sqlite3_exec(db, "CREATE TABLE json_cache (key TEXT PRIMARY KEY, json JSON);", nullptr, nullptr, nullptr);
+    sqlite3_exec(db, "CREATE TABLE cache (key TEXT PRIMARY KEY NOT NULL, type INTEGER NOT NULL, value BLOB NOT NULL);", nullptr, nullptr, nullptr);
+    sqlite3_exec(db, "CREATE TABLE json_cache (key TEXT PRIMARY KEY NOT NULL, json JSON NOT NULL CHECK (json_valid(json)));", nullptr, nullptr, nullptr);
     std::cout << "-----------" << sqlite3_version << "-------------" << std::endl;
 }
 
@@ -165,12 +165,13 @@ int MemCache::modify_json(const std::string& key, const std::string& json_path, 
     return result;
 }
 
-int MemCache::patch_json(const std::string &key, const std::string &patch) {
-    std::string sql = "UPDATE json_cache SET json = json_patch(json, ?) WHERE key = ?;";
+int MemCache::patch_json(const std::string& key, const std::string& patch) {
+    std::string sql = "UPDATE json_cache SET json = (CASE WHEN json_valid(?) THEN json_patch(json, ?) ELSE json END) WHERE key = ?;";
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     sqlite3_bind_text(stmt, 1, patch.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, patch.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, key.c_str(), -1, SQLITE_STATIC);
     auto result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     return result;

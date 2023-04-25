@@ -66,14 +66,15 @@ REQUIRE(retrieved_value == value);
 }
 
 TEST_CASE("Test MemCache JSON storage, retrieval, and modification", "[mem_cache]") {
+
 MemCache cache;
 
 std::string key = "json_key";
 std::string json = R"({"key1": "value1", "key2": 42})";
 
-cache.put_json(key, json);
+int result = cache.put_json(key, json);
+REQUIRE(result == SQLITE_DONE);
 auto retrieved_json = cache.get_json(key);
-
 REQUIRE(retrieved_json == json);
 
 auto value = cache.query_json(key, "$.key1");
@@ -85,8 +86,11 @@ std::string new_value = "new_value1";
 
 cache.modify_json(key, json_path, new_value);
 auto modified_value = cache.query_json(key, "$.key1");
-
-std::string expected_modified_json = R"({"key1": "new_value1", "key2": 42})";
-
 REQUIRE(modified_value == new_value);
+
+std::string patch = R"({"key3": "value3"})";
+result = cache.patch_json(key, patch);
+REQUIRE(result == SQLITE_DONE);
+auto patch_value = cache.query_json(key, "$.key3");
+REQUIRE(patch_value == "value3");
 }
