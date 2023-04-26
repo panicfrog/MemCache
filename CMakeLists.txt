@@ -20,6 +20,17 @@ endif()
 #add_library(src/sqlite3 STATIC src/sqlite3/sqlite3.c)
 #target_include_directories(src/sqlite3 PUBLIC src/sqlite3)
 
+if(IS_ANDROID)
+set(MEMCACHE_SOURCE_CODE
+        src/MemCache.cpp
+        src/MemCache.hpp
+        include/MemCache_C.h
+        src/MemCache_C.cpp
+        src/optional.hpp
+        src/sqlite3/sqlite3.c
+        src/sqlite3/sqlite3.h
+        src/main/java/cpp/MemCacheJni.cpp)
+else()
 set(MEMCACHE_SOURCE_CODE
         src/MemCache.cpp
         src/MemCache.hpp
@@ -28,10 +39,14 @@ set(MEMCACHE_SOURCE_CODE
         src/optional.hpp
         src/sqlite3/sqlite3.c
         src/sqlite3/sqlite3.h)
+endif()
 
 if(IS_IOS)
     add_library(MemCache STATIC ${MEMCACHE_SOURCE_CODE})
-elseif(IS_ANDROID OR IS_MACOS OR IS_WINDOWS)
+elseif(IS_ANDROID)
+    find_library(log-lib log)
+    add_library(MemCache SHARED ${MEMCACHE_SOURCE_CODE})
+elseif(IS_MACOS OR IS_WINDOWS)
     add_library(MemCache SHARED ${MEMCACHE_SOURCE_CODE})
 else()
     message(FATAL_ERROR "Unsupported platform")
@@ -45,7 +60,11 @@ target_include_directories(MemCache PUBLIC
         )
 
 #target_link_libraries(MemCache PRIVATE src/sqlite3)
+if(IS_ANDROID)
+target_link_libraries(MemCache ${log-lib})
+else()
 target_link_libraries(MemCache)
+endif()
 
 # Add compile options
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -74,7 +93,7 @@ endif()
 #            )
 #endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 # Add example
 add_executable(memory_cache_example example.cpp)
 target_link_libraries(memory_cache_example PRIVATE MemCache)

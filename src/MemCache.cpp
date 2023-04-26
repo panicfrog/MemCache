@@ -49,7 +49,7 @@ int MemCache::put(const std::string& key, const T& value) {
 
     int result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    assert(result == SQLITE_DONE);
+//    assert(result == SQLITE_DONE);
     return  result;
 }
 

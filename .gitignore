@@ -260,4 +260,8 @@ xcuserdata/
 /*.gcno
 **/xcshareddata/WorkspaceSettings.xcsettings
 
+### glade ###
+.cxx
+.gradle
+
 # End of https://www.toptal.com/developers/gitignore/api/clion,visualstudiocode,xcode,macos,cmake,intellij+all
