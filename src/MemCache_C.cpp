@@ -7,42 +7,33 @@
 using nonstd::optional;
 using nonstd::nullopt;
 
-extern void *MemCache_new() {
-    return new MemCache();
-}
-
-extern void MemCache_delete(void *cache) {
-    auto *c = (MemCache* )cache;
-    delete c;
-}
-
-extern int MemCache_put_string(void* cache, const char* key, const char* value) {
-    auto *c = (MemCache* )cache;
+extern int MemCache_put_string(const char* key, const char* value) {
+    auto c = MemCache::getInstance();
     return c->put(key, std::string(value));
 }
 
-extern int MemCache_put_int(void* cache, const char* key, int value) {
-    auto *c = (MemCache* )cache;
+extern int MemCache_put_int(const char* key, int value) {
+    auto c = MemCache::getInstance();
     return c->put(key, value);
 }
 
-extern int MemCache_put_double(void* cache, const char* key, double value) {
-    auto *c = (MemCache* )cache;
+extern int MemCache_put_double(const char* key, double value) {
+    auto c = MemCache::getInstance();
     return c->put(key, value);
 }
 
-extern int MemCache_put_bool(void* cache, const char* key, bool value) {
-    auto *c = (MemCache* )cache;
+extern int MemCache_put_bool(const char* key, bool value) {
+    auto c = MemCache::getInstance();
     return c->put(key, value);
 }
 
-extern int MemCache_put_bytes(void* cache, const char* key, const uint8_t* bytes, size_t size) {
-    auto *c = (MemCache* )cache;
+extern int MemCache_put_bytes(const char* key, const uint8_t* bytes, size_t size) {
+    auto c = MemCache::getInstance();
     return c->put(key, std::vector<uint8_t>(bytes, bytes + size));
 }
 
-extern bool MemCache_get_string(void* cache, const char* key, char **value) {
-    auto *c = (MemCache* )cache;
+extern bool MemCache_get_string(const char* key, char **value) {
+    auto c = MemCache::getInstance();
     optional<std::string> v = c->get<std::string>(key);
     if (v.has_value()) {
         char *result = (char *)malloc(strlen(v.value().c_str()) + 1);
@@ -54,8 +45,8 @@ extern bool MemCache_get_string(void* cache, const char* key, char **value) {
     }
 }
 
-extern bool MemCache_get_int(void* cache, const char* key, int *value) {
-    auto *c = (MemCache* )cache;
+extern bool MemCache_get_int(const char* key, int *value) {
+    auto c = MemCache::getInstance();
     optional<int> v = c->get<int>(key);
     if (v.has_value()) {
         *value = v.value();
@@ -65,8 +56,8 @@ extern bool MemCache_get_int(void* cache, const char* key, int *value) {
     }
 }
 
-extern bool MemCache_get_double(void* cache, const char* key, double *value) {
-    auto *c = (MemCache* )cache;
+extern bool MemCache_get_double(const char* key, double *value) {
+    auto c = MemCache::getInstance();
     optional<double> v = c->get<double>(key);
     if (v.has_value()) {
         *value = v.value();
@@ -76,8 +67,8 @@ extern bool MemCache_get_double(void* cache, const char* key, double *value) {
     }
 }
 
-extern bool MemCache_get_bool(void* cache, const char* key, bool *value) {
-    auto *c = (MemCache *)cache;
+extern bool MemCache_get_bool(const char* key, bool *value) {
+    auto c = MemCache::getInstance();
     optional<bool> v = c->get<bool>(key);
     if (v.has_value()) {
          *value = v.value();
@@ -87,8 +78,8 @@ extern bool MemCache_get_bool(void* cache, const char* key, bool *value) {
     }
 }
 
-extern bool MemCache_get_bytes(void* cache, const char* key, size_t* size, uint8_t*) {
-    auto *c = (MemCache *)cache;
+extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t*) {
+    auto c = MemCache::getInstance();
     optional<std::vector<uint8_t>> v = c->get<std::vector<uint8_t>>(key);
     if (v.has_value()) {
         std::vector<uint8_t> bytes = v.value();
@@ -102,13 +93,13 @@ extern bool MemCache_get_bytes(void* cache, const char* key, size_t* size, uint8
     }
 }
 
-extern int MemCache_put_json(void* cache, const char* key, const char* json) {
-    auto *c = (MemCache*)cache;
+extern int MemCache_put_json(const char* key, const char* json) {
+    auto c = MemCache::getInstance();
     return c->put_json(key, json);
 }
 
-extern bool MemCache_get_json(void* cache, const char* key, char **value) {
-    auto *c = (MemCache*)cache;
+extern bool MemCache_get_json(const char* key, char **value) {
+    auto c = MemCache::getInstance();
     optional<std::string> v = c->get_json(key);
     if (v.has_value()) {
         char *result = (char *)malloc(strlen(v.value().c_str()) + 1);
@@ -120,8 +111,9 @@ extern bool MemCache_get_json(void* cache, const char* key, char **value) {
     }
 }
 
-extern bool MemCache_query_json(void* cache, const char* key, const char* json_path, char **value) {
-    auto *c = (MemCache*)cache;
+
+extern bool MemCache_query_json(const char* key, const char* json_path, char **value) {
+    auto c = MemCache::getInstance();
     optional<std::string> v = c->query_json(key, json_path);
     if (v.has_value()) {
         char *result = (char *)malloc(strlen(v.value().c_str()) + 1);
@@ -133,12 +125,12 @@ extern bool MemCache_query_json(void* cache, const char* key, const char* json_p
     }
 }
 
-extern int MemCache_modify_json(void* cache, const char* key, const char* json_path, const char* value) {
-    auto *c = (MemCache*)cache;
+extern int MemCache_modify_json(const char* key, const char* json_path, const char* value) {
+    auto c = MemCache::getInstance();
     return c->modify_json(key, json_path, value);
 }
 
-extern int MemCache_patch_json(void* cache, const char* key, const char* patch) {
-    auto *c = (MemCache*)cache;
+extern int MemCache_patch_json(const char* key, const char* patch) {
+    auto c = MemCache::getInstance();
     return c->patch_json(key, patch);
 }

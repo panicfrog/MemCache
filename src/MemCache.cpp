@@ -11,11 +11,13 @@
 using nonstd::optional;
 using nonstd::nullopt;
 
+MemCache* MemCache::instance = nullptr;
+std::once_flag MemCache::flag_;
+
 MemCache::MemCache() {
     sqlite3_open(":memory:", &db);
     sqlite3_exec(db, "CREATE TABLE cache (key TEXT PRIMARY KEY NOT NULL, type INTEGER NOT NULL, value BLOB NOT NULL);", nullptr, nullptr, nullptr);
     sqlite3_exec(db, "CREATE TABLE json_cache (key TEXT PRIMARY KEY NOT NULL, json JSON NOT NULL CHECK (json_valid(json)));", nullptr, nullptr, nullptr);
-    std::cout << "-----------" << sqlite3_version << "-------------" << std::endl;
 }
 
 MemCache::~MemCache() {

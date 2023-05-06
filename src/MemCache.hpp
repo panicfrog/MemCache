@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <mutex>
 #include "sqlite3.h"
 #include "optional.hpp"
 
@@ -18,8 +19,15 @@ concept CacheValue = std::is_same_v<T, std::string> || std::is_same_v<T, int> ||
 
 class MemCache {
 public:
-    MemCache();
     ~MemCache();
+
+    static MemCache* getInstance() {
+        std::call_once(flag_, []() { instance = new MemCache(); });
+        return instance;
+    }
+
+    MemCache(const MemCache&) = delete;
+    MemCache& operator=(const MemCache&) = delete;
 
     template <CacheValue T>
     int put(const std::string& key, const T& value);
@@ -34,7 +42,10 @@ public:
     int patch_json(const std::string& key, const std::string& patch);
 
 private:
+    MemCache();
     sqlite3* db;
+    static MemCache* instance;
+    static std::once_flag flag_;
 };
 
 #endif // _MEM_CACHE_HPP_
