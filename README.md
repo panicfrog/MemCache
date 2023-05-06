@@ -1,169 +1,94 @@
-## BUILD
+## 集成
 
 ### 构建Android库
-1. 在项目根目录中创建一个名为`build-android`的新文件夹：
-2. 进入新创建的文件夹：
-3. 使用CMake为Android配置项目：
+1. 将项目通过gradle集成到项目中
 
-``` shell
-cmake .. \
--DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
--DANDROID_ABI="armeabi-v7a" \
--DANDROID_PLATFORM=android-21 \
--DCMAKE_BUILD_TYPE=Release
-```
-注意：
-- 请替换`$ANDROID_NDK`为您的Android NDK安装路径。
-- 根据需要更改`-DANDROID_ABI`和`-DANDROID_PLATFORM`选项。
+2. 在项目build.gradle中添加prefab的支持
 
-4. 构建项目：
+   ```groovy
+   android {
+   	...
+     buildFeatures {
+           prefab true
+     }
+     ...
+   }
+   ```
 
-``` shell
-cmake --build .
-```
-- 在`build-android`文件夹下的`lib`子目录中找到生成的库。
+3. 在项目中创建一个cpp文件夹，写一个CMakeLists.txt
+
+   ```cmake
+   # For more information about using CMake with Android Studio, read the
+   # documentation: https://d.android.com/studio/projects/add-native-code.html
+   
+   # Sets the minimum version of CMake required to build the native library.
+   
+   cmake_minimum_required(VERSION 3.22.1)
+   
+   # Declares and names the project.
+   
+   project(YourProject VERSION 1.0.0 LANGUAGES CXX)
+   
+   find_package(MemCache REQUIRED CONFIG)
+   
+   add_library(
+           YourProject
+           SHARED
+           native-lib.cpp)
+   
+   find_library(
+           log-lib
+           log)
+   
+   target_link_libraries(
+           YourProject
+           MemCache::MemCache
+           ${log-lib})
+   ```
+
+4. 在配置中添加cpp的编译配置
+
+   ```groovy
+   android {
+     	...
+       defaultConfig {
+          ...
+          externalNativeBuild {
+               cmake {
+                   cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all -std=c++20 -DONANDROID"
+                   abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+                   arguments '-DANDROID_STL=c++_shared'
+             }
+         }
+         ...
+     }
+     buildFeatures {
+           prefab true
+     }
+     
+      externalNativeBuild {
+           cmake {
+               path "src/main/cpp/CMakeLists.txt"
+               version '3.22.1'
+           }
+       }
+     ...
+   }
+   ```
+
+   
 
 ### 构建iOS库
-在次项目目录执行
+
+1. 在此项目目录执行
+
 ```shell
 ./build_ios.sh
 ```
 
+2. 通过cocoapods集成（通过路径或者git地址）
 
-```swift
-//
-//  MemCache.swift
-//  MemCacheDemo
-//
-//  Created by mac studio on 2023/4/24.
-//
-
-import Foundation
-
-final class MemCache {
-  let cache: UnsafeMutableRawPointer!
-  init() {
-    self.cache = MemCache_new()
-  }
-  
-  func getString(forKey key: String) -> String? {
-    let cKey = key.cString(using: .utf8)
-    var cValue: UnsafeMutablePointer<Int8>?
-    
-    let success = MemCache_get_string(cache, cKey, &cValue)
-    let value: String?
-    if success {
-      value = String(cString: cValue!, encoding: .utf8)
-    } else {
-      value = nil
-    }
-    return value
-  }
-  
-  func getInt32(forKey key: String) -> Int32? {
-    let cKey = key.cString(using: .utf8)
-    var value: Int32 = 0
-    let success = MemCache_get_int(cache, cKey, &value)
-    if success {
-      return value
-    } else {
-      return nil
-    }
-  }
-  
-  func getDouble(forKey key: String) -> Double? {
-    let cKey = key.cString(using: .utf8)
-    var value: Double = 0
-    let success = MemCache_get_double(cache, cKey, &value)
-    if success {
-      return value
-    } else {
-      return nil
-    }
-  }
-  
-  func getBool(forKey key: String) -> Bool? {
-    let cKey = key.cString(using: .utf8)
-    var value: Bool = true
-    let success = MemCache_get_bool(cache, cKey, &value)
-    if success {
-      return value
-    } else {
-      return nil
-    }
-  }
-  
-  func put(value: Int32, forKey key: String) -> Int32 {
-    let cKey = key.cString(using: .utf8)
-    return MemCache_put_int(cache, cKey, value)
-  }
-  
-  func put(value: Bool, forKey key: String) -> Int32 {
-    let cKey = key.cString(using: .utf8)
-    return MemCache_put_bool(cache, cKey, value)
-  }
-  
-  func put(value: Double, forKey key: String) -> Int32 {
-    let cKey = key.cString(using: .utf8)
-    return MemCache_put_double(cache, cKey, value)
-  }
-  
-  func put(value: String, forKey key: String) -> Int32 {
-    let cValue = value.cString(using: .utf8)
-    let cKey = key.cString(using: .utf8)
-    return MemCache_put_string(cache, cKey, cValue)
-  }
-  
-  func putJson(value: String, forKey key: String) -> Int32 {
-    let cValue = value.cString(using: .utf8)
-    let cKey = key.cString(using: .utf8)
-    return MemCache_put_json(cache, cKey, cValue)
-  }
-  
-  func getJson(forkey key: String) -> String? {
-    let cKey = key.cString(using: .utf8)
-    var cValue: UnsafeMutablePointer<Int8>?
-    
-    let success = MemCache_get_json(cache, cKey, &cValue)
-    let value: String?
-    if success {
-      value = String(cString: cValue!, encoding: .utf8)
-    } else {
-      value = nil
-    }
-    return value
-  }
-  
-  func queryJson(forKey key: String, with path: String) -> String? {
-    let cKey = key.cString(using: .utf8)
-    let cPath = path.cString(using: .utf8)
-    var cValue: UnsafeMutablePointer<Int8>?
-    let success = MemCache_query_json(cache, cKey, cPath, &cValue)
-    let value: String?
-    if success {
-      value = String(cString: cValue!, encoding: .utf8)
-    } else {
-      value = nil
-    }
-    return value
-  }
-  
-  func modifyJson(value: String, withPath: String, forKey key: String) -> Int32 {
-    let cValue = value.cString(using: .utf8)
-    let cPath = withPath.cString(using: .utf8)
-    let cKey = key.cString(using: .utf8)
-    return MemCache_modify_json(cache, cKey, cPath, cValue)
-  }
-  
-  func patchJson(patch: String, forKey key: String) -> Int32 {
-    let cPatch = patch.cString(using: .utf8)
-    let cKey = key.cString(using: .utf8)
-    return MemCache_patch_json(cache, cKey, cPatch)
-  }
-  
-  deinit {
-    MemCache_delete(cache)
-  }
-}
-
+```rub
+pod 'MemCache-Swift', :path => "../../cpp/MemCache"
 ```
+
