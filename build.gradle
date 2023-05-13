@@ -1,11 +1,12 @@
 plugins {
   id 'com.android.library'
   id 'org.jetbrains.kotlin.android'
+  id 'maven-publish'
 }
 
 android {
-  compileSdk 30
-  ndkVersion '22.1.7171670'
+  compileSdk 33
+  ndkVersion '21.4.7075529'
 
   defaultConfig {
     minSdk 23
@@ -15,7 +16,7 @@ android {
 
     externalNativeBuild {
       cmake {
-        cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all -std=c++20 -DONANDROID"
+        cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all -std=c++1y -DONANDROID"
         abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
         arguments '-DANDROID_STL=c++_shared'
       }
@@ -25,12 +26,15 @@ android {
   externalNativeBuild {
     cmake {
       path "CMakeLists.txt"
-      version '3.22.1'
+//      version '3.22.1'
     }
   }
 
   buildTypes {
     release {
+      minifyEnabled false
+    }
+    debug {
       minifyEnabled false
     }
   }
@@ -56,10 +60,36 @@ android {
     exclude("**/libMemCache.so")
     exclude("**/libc++_shared.so")
   }
-
 }
 
-dependencies {
-  implementation 'androidx.core:core:1.7.0'
-  implementation 'androidx.core:core-ktx:1.7.0'
+afterEvaluate {
+  publishing {
+    publications {
+      MemCache(MavenPublication) {
+        groupId 'com.yongping.jmemcache'
+        artifactId 'MemCache'
+        version '0.0.1'
+        artifact("$buildDir/outputs/aar/${project.getName()}-debug.aar")
+      }
+
+
+//      MemCache(MavenPublication) {
+//        groupId 'com.yongping.jmemcache'
+//        artifactId 'MemCache'
+//        version '0.0.1'
+//        artifact("$buildDir/outputs/aar/${project.getName()}-debug.aar")
+//      }
+    }
+      repositories {
+        maven {
+          url = uri('file:///Users/yyp/source/maven')
+        }
+      }
+
+  }
 }
+
+//dependencies {
+//  implementation 'androidx.core:core:1.7.0'
+//  implementation 'androidx.core:core-ktx:1.7.0'
+//}

@@ -3,19 +3,16 @@
 
 #pragma once
 
-#include <concepts>
 #include <cstdint>
 #include <string>
 #include <vector>
 #include <mutex>
+#include <type_traits>
 #include "sqlite3.h"
 #include "optional.hpp"
 
 using nonstd::optional;
 using nonstd::nullopt;
-
-template <typename T>
-concept CacheValue = std::is_same_v<T, std::string> || std::is_same_v<T, int> || std::is_same_v<T, double> || std::is_same_v<T, bool> || std::is_same_v<T, std::vector<std::uint8_t>>;
 
 class MemCache {
 public:
@@ -29,11 +26,41 @@ public:
     MemCache(const MemCache&) = delete;
     MemCache& operator=(const MemCache&) = delete;
 
-    template <CacheValue T>
-    int put(const std::string& key, const T& value);
+    template <typename T>
+    int put(const std::string& key, const T& value) = delete; // 禁止使用未特化版本的put函数
 
-    template <CacheValue T>
-    optional<T> get(const std::string& key) noexcept(false);
+    template <>
+    int put<int>(const std::string& key, const int& value);
+
+    template <>
+    int put<double>(const std::string& key, const double& value);
+
+    template <>
+    int put<bool>(const std::string& key, const bool& value);
+
+    template <>
+    int put<std::string>(const std::string& key, const std::string& value);
+
+    template <>
+    int put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value);
+
+    template <typename T>
+    optional<T> get(const std::string& key) = delete; // 禁止使用未特化版本的get函数
+
+    template <>
+    optional<int> get<int>(const std::string& key);
+
+    template <>
+    optional<double> get<double>(const std::string& key);
+
+    template <>
+    optional<bool> get<bool>(const std::string& key);
+
+    template <>
+    optional<std::string> get<std::string>(const std::string& key);
+
+    template <>
+    optional<std::vector<std::uint8_t>> get<std::vector<std::uint8_t>>(const std::string& key);
 
     int put_json(const std::string& key, const std::string& json);
     optional<std::string> get_json(const std::string& key);

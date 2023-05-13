@@ -3,7 +3,7 @@
 //
 #include <jni.h>
 #include <string>
-#include "MemCache.hpp"
+#include "../../../MemCache.hpp"
 
 extern "C"
 JNIEXPORT jstring JNICALL

@@ -13,17 +13,38 @@ rm -rf "${INSTALL_DIR}"
 
 # Build for iOS devices (arm64)
 IOS_TARGET="iphoneos"
-cmake -B "${BUILD_DIR}/${IOS_TARGET}" -G Xcode -DCMAKE_TOOLCHAIN_FILE="${IOS_CMAKE_DIR}/ios.toolchain.cmake" -DPLATFORM=OS64 -DENABLE_BITCODE=0 -DDEPLOYMENT_TARGET=11 "${SOURCE_DIR}"
+cmake \
+    -B "${BUILD_DIR}/${IOS_TARGET}" \
+    -G Xcode -DCMAKE_TOOLCHAIN_FILE="${IOS_CMAKE_DIR}/ios.toolchain.cmake" \
+    -DPLATFORM=OS64 \
+    -DENABLE_BITCODE=0 \
+    -DDEPLOYMENT_TARGET=11 \
+    -DMEMCACHE_IOS_STATIC=ON \
+    "${SOURCE_DIR}"
 cmake --build "${BUILD_DIR}/${IOS_TARGET}" --config ${BUILD_TYPE}
 
 # Build for iOS simulators (x86_64)
 SIM_TARGET="iphone-simulator"
 SIM_TARGET_X86="${SIM_TARGET}/x86"
-cmake -B "${BUILD_DIR}/${SIM_TARGET_X86}" -G Xcode -DCMAKE_TOOLCHAIN_FILE="${IOS_CMAKE_DIR}/ios.toolchain.cmake" -DPLATFORM=SIMULATOR64 -DENABLE_BITCODE=0 -DDEPLOYMENT_TARGET=11 "${SOURCE_DIR}"
+cmake \
+    -B "${BUILD_DIR}/${SIM_TARGET_X86}" \
+    -G Xcode -DCMAKE_TOOLCHAIN_FILE="${IOS_CMAKE_DIR}/ios.toolchain.cmake" \
+    -DPLATFORM=SIMULATOR64 \
+    -DENABLE_BITCODE=0 \
+    -DDEPLOYMENT_TARGET=11 \
+    -DMEMCACHE_IOS_STATIC=ON \
+    "${SOURCE_DIR}"
 cmake --build "${BUILD_DIR}/${SIM_TARGET_X86}" --config ${BUILD_TYPE}
 
 SIM_TARGET_ARM="${SIM_TARGET}/arm64"
-cmake -B "${BUILD_DIR}/${SIM_TARGET_ARM}" -G Xcode -DCMAKE_TOOLCHAIN_FILE="${IOS_CMAKE_DIR}/ios.toolchain.cmake" -DPLATFORM=SIMULATORARM64 -DENABLE_BITCODE=0 -DDEPLOYMENT_TARGET=11 "${SOURCE_DIR}"
+cmake \
+    -B "${BUILD_DIR}/${SIM_TARGET_ARM}" \
+    -G Xcode -DCMAKE_TOOLCHAIN_FILE="${IOS_CMAKE_DIR}/ios.toolchain.cmake" \
+    -DPLATFORM=SIMULATORARM64 \
+    -DENABLE_BITCODE=0 \
+    -DMEMCACHE_IOS_STATIC=ON \
+    -DDEPLOYMENT_TARGET=11 \
+    "${SOURCE_DIR}"
 cmake --build "${BUILD_DIR}/${SIM_TARGET_ARM}" --config ${BUILD_TYPE}
 
 libtool -static \
@@ -45,4 +66,4 @@ xcodebuild -create-xcframework \
     -output "${INSTALL_DIR}/MemCache.xcframework"
 
 # remove build
-#  rm -rf "${BUILD_DIR}"
+ rm -rf "${BUILD_DIR}"
