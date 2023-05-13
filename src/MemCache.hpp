@@ -14,6 +14,14 @@
 using nonstd::optional;
 using nonstd::nullopt;
 
+template <typename T>
+using is_memcache_value_type = std::disjunction<
+    std::is_same<T, std::string>,
+    std::is_same<T, int>,
+    std::is_same<T, double>,
+    std::is_same<T, bool>,
+    std::is_same<T, std::vector<uint8_t>>>;
+
 class MemCache {
 public:
     ~MemCache();
@@ -26,41 +34,11 @@ public:
     MemCache(const MemCache&) = delete;
     MemCache& operator=(const MemCache&) = delete;
 
-    template <typename T>
-    int put(const std::string& key, const T& value) = delete; // 禁止使用未特化版本的put函数
+    template <typename T, typename = typename std::enable_if<is_memcache_value_type<T>::value>::type>
+    int put(const std::string& key, const T& value);
 
-    template <>
-    int put<int>(const std::string& key, const int& value);
-
-    template <>
-    int put<double>(const std::string& key, const double& value);
-
-    template <>
-    int put<bool>(const std::string& key, const bool& value);
-
-    template <>
-    int put<std::string>(const std::string& key, const std::string& value);
-
-    template <>
-    int put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value);
-
-    template <typename T>
-    optional<T> get(const std::string& key) = delete; // 禁止使用未特化版本的get函数
-
-    template <>
-    optional<int> get<int>(const std::string& key);
-
-    template <>
-    optional<double> get<double>(const std::string& key);
-
-    template <>
-    optional<bool> get<bool>(const std::string& key);
-
-    template <>
-    optional<std::string> get<std::string>(const std::string& key);
-
-    template <>
-    optional<std::vector<std::uint8_t>> get<std::vector<std::uint8_t>>(const std::string& key);
+    template <typename T, typename = typename std::enable_if<is_memcache_value_type<T>::value>::type>
+    optional<T> get(const std::string& key);
 
     int put_json(const std::string& key, const std::string& json);
     optional<std::string> get_json(const std::string& key);

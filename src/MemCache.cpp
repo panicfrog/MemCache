@@ -1,4 +1,3 @@
-#include <iostream>
 
 #include "MemCache.hpp"
 
@@ -97,88 +96,39 @@ int MemCache::patch_json(const std::string& key, const std::string& patch) {
     return result;
 }
 
-template <typename T, typename std::enable_if<std::is_same<T, std::string>::value || std::is_same<T, int>::value || std::is_same<T, double>::value || std::is_same<T, bool>::value || std::is_same<T, std::vector<std::uint8_t>>::value, int>::type = 0>
-int put(const std::string& key, const T& value);
+template<typename T, typename>
+int MemCache::put(const std::string &key, const T &value) {
+    std::string sql = "INSERT OR REPLACE INTO cache (key, type, value) VALUES (?, ?, ?);";
+    sqlite3_stmt* stmt;
+    sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
 
-#define PUT_IMPL(Type, BindFunc, ...) \
-    std::string sql = "INSERT OR REPLACE INTO cache (key, type, value) VALUES (?, ?, ?);"; \
-    sqlite3_stmt* stmt; \
-    sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr); \
-    sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC); \
-    sqlite3_bind_int(stmt, 2, Type); \
-    BindFunc(stmt, 3, __VA_ARGS__); \
-    int result = sqlite3_step(stmt); \
-    sqlite3_finalize(stmt); \
-    return result;
+    sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
 
-template <>
-int MemCache::put<int>(const std::string& key, const int& value) {
-    PUT_IMPL(CACHE_TYPE_INT, sqlite3_bind_int, value)
-}
-
-template <>
-int MemCache::put<double>(const std::string& key, const double& value) {
-    PUT_IMPL(CACHE_TYPE_DOUBLE, sqlite3_bind_double, value)
-}
-
-template <>
-int MemCache::put<bool>(const std::string& key, const bool& value) {
-    PUT_IMPL(CACHE_TYPE_BOOL, sqlite3_bind_int, static_cast<int>(value))
-}
-
-template <>
-int MemCache::put<std::string>(const std::string& key, const std::string& value) {
-    PUT_IMPL(CACHE_TYPE_STRING, sqlite3_bind_text, value.c_str(), -1, SQLITE_STATIC)
-}
-
-template <>
-int MemCache::put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value) {
-    PUT_IMPL(CACHE_TYPE_UINT8_ARRAY, sqlite3_bind_blob, std::data(value), value.size(), SQLITE_STATIC)
-}
-
-#define GET_IMPL(Type, Transfer) \
-    std::string sql = "SELECT type, value FROM cache WHERE key = ?;"; \
-    sqlite3_stmt* stmt; \
-    sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr); \
-    sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC); \
-    auto result = sqlite3_step(stmt); \
-    if (result == SQLITE_ROW) { \
-        int type = sqlite3_column_int(stmt, 0); \
-        if (type == Type) { \
-            Transfer; \
-            sqlite3_finalize(stmt); \
-            return value; \
-        } else { \
-            sqlite3_finalize(stmt); \
-            return nullopt; \
-        } \
-    } else { \
-        sqlite3_finalize(stmt); \
-        return nullopt; \
+    if constexpr (std::is_same_v<T, int>) {
+        sqlite3_bind_int(stmt, 2, CACHE_TYPE_INT);
+        sqlite3_bind_int(stmt, 3, value);
+    } else if constexpr (std::is_same_v<T, double>) {
+        sqlite3_bind_int(stmt, 2, CACHE_TYPE_DOUBLE);
+        sqlite3_bind_double(stmt, 3, value);
+    } else if constexpr (std::is_same_v<T, bool>) {
+        sqlite3_bind_int(stmt, 2, CACHE_TYPE_BOOL);
+        sqlite3_bind_int(stmt, 3, static_cast<int>(value));
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        sqlite3_bind_int(stmt, 2, CACHE_TYPE_STRING);
+        sqlite3_bind_text(stmt, 3, value.c_str(), -1, SQLITE_STATIC);
+    } else if constexpr (std::is_same_v<T, std::vector<std::uint8_t>>) {
+        sqlite3_bind_int(stmt, 2, CACHE_TYPE_UINT8_ARRAY);
+        sqlite3_bind_blob(stmt, 3, std::data(value), value.size(), SQLITE_STATIC);
     }
 
-template <>
-optional<int> MemCache::get<int>(const std::string& key) {
-    GET_IMPL(CACHE_TYPE_INT, int value = sqlite3_column_int(stmt, 1))
+    int result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+//    assert(result == SQLITE_DONE);
+    return  result;
 }
 
-template <>
-optional<double> MemCache::get<double>(const std::string& key) {
-    GET_IMPL(CACHE_TYPE_DOUBLE, double value = sqlite3_column_double(stmt, 1))
-}
-
-template <>
-optional<bool> MemCache::get<bool>(const std::string& key) {
-    GET_IMPL(CACHE_TYPE_BOOL, bool value = static_cast<bool>(sqlite3_column_int(stmt, 1)))
-}
-
-template <>
-optional<std::string> MemCache::get<std::string>(const std::string& key) {
-    GET_IMPL(CACHE_TYPE_STRING, std::string value = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1))))
-}
-
-template <>
-optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(const std::string& key) {
+template<typename T, typename>
+optional<T> MemCache::get(const std::string &key) {
     std::string sql = "SELECT type, value FROM cache WHERE key = ?;";
     sqlite3_stmt* stmt;
     sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -187,6 +137,32 @@ optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(con
     auto result = sqlite3_step(stmt);
     if (result == SQLITE_ROW) {
         int type = sqlite3_column_int(stmt, 0);
+
+        if constexpr (std::is_same_v<T, int>) {
+            if (type == CACHE_TYPE_INT) {
+                int value = sqlite3_column_int(stmt, 1);
+                sqlite3_finalize(stmt);
+                return value;
+            }
+        } else if constexpr (std::is_same_v<T, double>) {
+            if (type == CACHE_TYPE_DOUBLE) {
+                double value = sqlite3_column_double(stmt, 1);
+                sqlite3_finalize(stmt);
+                return value;
+            }
+        } else if constexpr (std::is_same_v<T, bool>) {
+            if (type == CACHE_TYPE_BOOL) {
+                bool value = static_cast<bool>(sqlite3_column_int(stmt, 1));
+                sqlite3_finalize(stmt);
+                return value;
+            }
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            if (type == CACHE_TYPE_STRING) {
+                std::string value = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+                sqlite3_finalize(stmt);
+                return value;
+            }
+        } else if constexpr (std::is_same_v<T, std::vector<std::uint8_t>>) {
             if (type == CACHE_TYPE_UINT8_ARRAY) {
                 const void *blob = sqlite3_column_blob(stmt, 1);
                 int size = sqlite3_column_bytes(stmt, 1);
@@ -194,6 +170,7 @@ optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(con
                                                        reinterpret_cast<const std::uint8_t *>(blob) + size);
                 sqlite3_finalize(stmt);
                 return value;
+            }
         } else {
             return nullopt;
         }
@@ -202,3 +179,16 @@ optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(con
         return nullopt;
     }
 }
+
+// Explicit template instantiation for the supported types
+template int MemCache::put<std::string>(const std::string& key, const std::string& value);
+template int MemCache::put<int>(const std::string& key, const int& value);
+template int MemCache::put<double>(const std::string& key, const double& value);
+template int MemCache::put<bool>(const std::string& key, const bool& value);
+template int MemCache::put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value);
+
+template optional<std::string> MemCache::get<std::string>(const std::string& key);
+template optional<int> MemCache::get<int>(const std::string& key);
+template optional<double> MemCache::get<double>(const std::string& key);
+template optional<bool> MemCache::get<bool>(const std::string& key);
+template optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(const std::string& key);
