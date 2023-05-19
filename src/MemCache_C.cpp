@@ -32,6 +32,46 @@ extern int MemCache_put_bytes(const char* key, const uint8_t* bytes, size_t size
     return c->put(key, std::vector<uint8_t>(bytes, bytes + size));
 }
 
+int MemCache_put_strings(const char* const* key, const char* const* value, size_t size) {
+    std::vector<std::pair<std::string, std::string>> kvs;
+    kvs.reserve(size);
+    for(int i = 0; i < size; ++i) {
+        kvs.emplace_back(std::pair{std::string {*(key + i)}, std::string {*(value + i)}});
+    }
+    auto c = MemCache::getInstance();
+    return c->put(kvs);
+}
+
+int MemCache_put_ints(const char* const* key, const int* value, size_t size) {
+    std::vector<std::pair<std::string, int>> kvs;
+    kvs.reserve(size);
+    for(int i = 0; i < size; ++i) {
+       kvs.emplace_back(std::pair{std::string {*(key + i)}, *(value + i)});
+    }
+    auto c = MemCache::getInstance();
+    return c->put(kvs);
+}
+
+int MemCache_put_doubles(const char* const* key, const double* value, size_t size) {
+    std::vector<std::pair<std::string, double>> kvs;
+    kvs.reserve(size);
+    for(int i = 0; i < size; ++i) {
+        kvs.emplace_back(std::pair{std::string {*(key + i)}, *(value + i)});
+    }
+    auto c = MemCache::getInstance();
+    return c->put(kvs);
+}
+
+int MemCache_put_bools(const char* const* key, const bool* value, size_t size) {
+    std::vector<std::pair<std::string, bool>> kvs;
+    kvs.reserve(size);
+    for(int i = 0; i < size; ++i) {
+        kvs.emplace_back(std::pair{std::string {*(key + i)}, *(value + i)});
+    }
+    auto c = MemCache::getInstance();
+    return c->put(kvs);
+}
+
 extern bool MemCache_get_string(const char* key, char **value) {
     auto c = MemCache::getInstance();
     optional<std::string> v = c->get<std::string>(key);

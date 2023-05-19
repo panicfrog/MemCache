@@ -4,53 +4,59 @@
 #include "MemCache.hpp"
 #include "MemCach_Cpp.hpp"
 
-template <>
-int put<int>(const std::string& key, const int& value) {
+template <> int put<int>(const std::string& key, const int& value) {
     return MemCache::getInstance()->put<int>(key, value);
 }
 
-template <>
-int put<double>(const std::string& key, const double& value) {
+template <> int put<double>(const std::string& key, const double& value) {
     return MemCache::getInstance()->put<double>(key, value);
 }
 
-template <>
-int put<bool>(const std::string& key, const bool& value) {
+template <> int put<bool>(const std::string& key, const bool& value) {
     return MemCache::getInstance()->put<bool>(key, value);
 }
 
-template <>
-int put<std::string>(const std::string& key, const std::string& value) {
+template <> int put<std::string>(const std::string& key, const std::string& value) {
     return MemCache::getInstance()->put<std::string>(key, value);
 }
 
-template <>
-int put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value) {
+template <> int put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value) {
     return MemCache::getInstance()->put<std::vector<std::uint8_t>>(key, value);
 }
 
-template <>
-optional<int> get<int>(const std::string& key) {
+template<> int put<std::string>(const std::vector<std::pair<std::string, std::string>>& kvs) {
+    return MemCache::getInstance()->put<std::string>(kvs);
+}
+template<> int put<int>(const std::vector<std::pair<std::string, int>>& kvs) {
+    return MemCache::getInstance()->put<int>(kvs);
+}
+template<> int put<double>(const std::vector<std::pair<std::string,double>>& kvs) {
+    return MemCache::getInstance()->put<double>(kvs);
+}
+template<> int put<bool>(const std::vector<std::pair<std::string, bool>>& kvs) {
+    return MemCache::getInstance()->put<bool>(kvs);
+}
+template<> int put<std::vector<std::uint8_t>>(const std::vector<std::pair<std::string, std::vector<std::uint8_t>>>& kvs) {
+    return MemCache::getInstance()->put<std::vector<std::uint8_t>>(kvs);
+}
+
+template <> optional<int> get<int>(const std::string& key) {
     return MemCache::getInstance()->get<int>(key);
 }
 
-template <>
-optional<double> get<double>(const std::string& key) {
+template <> optional<double> get<double>(const std::string& key) {
     return MemCache::getInstance()->get<double>(key);
 }
 
-template <>
-optional<bool> get<bool>(const std::string& key) {
+template <> optional<bool> get<bool>(const std::string& key) {
     return MemCache::getInstance()->get<bool>(key);
 }
 
-template <>
-optional<std::string> get<std::string>(const std::string& key) {
+template <> optional<std::string> get<std::string>(const std::string& key) {
     return MemCache::getInstance()->get<std::string>(key);
 }
 
-template <>
-optional<std::vector<std::uint8_t>> get<std::vector<std::uint8_t>>(const std::string& key) {
+template <> optional<std::vector<std::uint8_t>> get<std::vector<std::uint8_t>>(const std::string& key) {
     return MemCache::getInstance()->get<std::vector<std::uint8_t>>(key);
 }
 

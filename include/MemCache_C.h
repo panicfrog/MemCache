@@ -18,6 +18,11 @@ extern "C" {
     extern int MemCache_put_bool(const char* key, bool value);
     extern int MemCache_put_bytes(const char* key, const uint8_t* bytes, size_t size);
 
+    extern int MemCache_put_strings(const char* const* key, const char* const* value, size_t size);
+    extern int MemCache_put_ints(const char* const* key, const int* value, size_t size);
+    extern int MemCache_put_doubles(const char* const* key, const double* value, size_t size);
+    extern int MemCache_put_bools(const char* const* key, const bool* value, size_t size);
+
     extern bool MemCache_get_string(const char* key,  char ** value);
     extern bool MemCache_get_int(const char* key, int *value);
     extern bool MemCache_get_double(const char* key, double *value);

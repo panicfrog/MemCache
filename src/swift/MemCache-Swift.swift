@@ -78,6 +78,50 @@ final public class MemCache {
     let cKey = key.cString(using: .utf8)
     return MemCache_put_string(cKey, cValue)
   }
+
+  public func put(stringPairs: __owned [(String, String)]) throws -> Int32 {
+    let keys = stringPairs.map { $0.0 }
+    let values = stringPairs.map { $0.1 }
+    let size = stringPairs.count
+    return try keys.withCStringArray { keysBufferPointer in
+      return try values.withCStringArray { valuesBufferPoint in
+       return MemCache_put_strings(keysBufferPointer, valuesBufferPoint, size)
+      }
+    }
+  }
+
+  public func put(int32Pairs: __owned [(String, Int32)]) throws -> Int32 {
+    let keys = int32Pairs.map { $0.0 }
+    let values = int32Pairs.map { $0.1 }
+    let size = int32Pairs.count
+    return try keys.withCStringArray { keysBuffer in
+      values.withUnsafeBufferPointer { valuesBuffer in
+        MemCache_put_ints(keysBuffer, valuesBuffer.baseAddress, size)
+      }
+    }
+  }
+  
+  public func put(doublePairs: __owned [(String, Double)]) throws -> Int32 {
+    let keys = doublePairs.map { $0.0 }
+    let values = doublePairs.map { $0.1 }
+    let size = doublePairs.count
+    return try keys.withCStringArray { keysBuffer in
+      values.withUnsafeBufferPointer { valuesBuffer in
+        MemCache_put_doubles(keysBuffer, valuesBuffer.baseAddress, size)
+      }
+    }
+  }
+
+  public func put(boolPairs: __owned [(String, Bool)]) throws -> Int32 {
+    let keys = boolPairs.map { $0.0 }
+    let values = boolPairs.map { $0.1 }
+    let size = boolPairs.count
+    return try keys.withCStringArray { keysBuffer in
+      values.withUnsafeBufferPointer { valuesBuffer in
+        MemCache_put_bools(keysBuffer, valuesBuffer.baseAddress, size)
+      }
+    }
+  }
   
   public func putJson(value: String, forKey key: String) -> Int32 {
     let cValue = value.cString(using: .utf8)
@@ -125,5 +169,35 @@ final public class MemCache {
     let cPatch = patch.cString(using: .utf8)
     return MemCache_patch_json(cKey, cPatch)
   }
-  
+
 }
+
+enum CStringError: Error {
+    case allocationFailed
+}
+
+extension Array where Element == String {
+  public func withCStringArray<R>(
+      _ body: (UnsafePointer<UnsafePointer<CChar>?>?) throws -> R
+  ) throws -> R {
+      var cStrings: [UnsafePointer<CChar>?] = []
+      defer {
+          cStrings.forEach {
+              if let mutablePtr = UnsafeMutablePointer(mutating: $0) {
+                  free(mutablePtr)
+              }
+          }
+      }
+      for arg in self {
+          guard let cString = strdup(arg) else {
+              throw CStringError.allocationFailed
+          }
+          cStrings.append(cString)
+      }
+      cStrings.append(nil)
+      return try cStrings.withUnsafeBufferPointer { bufferPointer in
+          try body(bufferPointer.baseAddress)
+      }
+  }
+}
+

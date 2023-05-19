@@ -69,7 +69,7 @@ afterEvaluate {
         groupId 'com.yongping.jmemcache'
         artifactId 'MemCache'
         version '0.0.1'
-        artifact("$buildDir/outputs/aar/${project.getName()}-debug.aar")
+        artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
       }
 
 

@@ -8,6 +8,7 @@
 #include <vector>
 #include <mutex>
 #include <type_traits>
+#include <utility>
 #include "sqlite3.h"
 #include "optional.hpp"
 
@@ -39,6 +40,9 @@ public:
 
     template <typename T, typename = typename std::enable_if<is_memcache_value_type<T>::value>::type>
     optional<T> get(const std::string& key);
+
+    template <typename T, typename = typename std::enable_if<is_memcache_value_type<T>::value>::type>
+    int put(const std::vector<std::pair<std::string, T>>& kvs);
 
     int put_json(const std::string& key, const std::string& json);
     optional<std::string> get_json(const std::string& key);
