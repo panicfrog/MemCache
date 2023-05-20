@@ -69,7 +69,7 @@ Java_com_yongping_jmemcache_MemCache_putString(JNIEnv *env,
                                                jlong native_handle,
                                                jstring key,
                                                jstring value) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -85,7 +85,7 @@ Java_com_yongping_jmemcache_MemCache_putBytes(JNIEnv *env,
                                               jlong native_handle,
                                               jstring key,
                                               jbyteArray value) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -103,7 +103,7 @@ Java_com_yongping_jmemcache_MemCache_getInt(JNIEnv *env,
                                             jobject thiz,
                                             jlong native_handle,
                                             jstring key) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -123,7 +123,7 @@ Java_com_yongping_jmemcache_MemCache_getDouble(JNIEnv *env,
                                                jobject thiz,
                                                jlong native_handle,
                                                jstring key) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -143,7 +143,7 @@ Java_com_yongping_jmemcache_MemCache_getBool(JNIEnv *env,
                                              jobject thiz,
                                              jlong native_handle,
                                              jstring key) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -163,7 +163,7 @@ Java_com_yongping_jmemcache_MemCache_getString(JNIEnv *env,
                                                jobject thiz,
                                                jlong native_handle,
                                                jstring key) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -181,8 +181,7 @@ Java_com_yongping_jmemcache_MemCache_getBytes(JNIEnv *env,
                                               jobject thiz,
                                               jlong native_handle,
                                               jstring key) {
-    // TODO: implement getBytes()
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -203,7 +202,7 @@ Java_com_yongping_jmemcache_MemCache_putJson(JNIEnv *env,
                                              jlong native_handle,
                                              jstring key,
                                              jstring json) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -220,7 +219,7 @@ Java_com_yongping_jmemcache_MemCache_getJson(JNIEnv *env,
                                              jobject thiz,
                                              jlong native_handle,
                                              jstring key) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -239,7 +238,7 @@ Java_com_yongping_jmemcache_MemCache_queryJson(JNIEnv *env,
                                                jlong native_handle,
                                                jstring key,
                                                jstring json_path) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -263,7 +262,7 @@ Java_com_yongping_jmemcache_MemCache_modifyJson(JNIEnv *env,
                                                 jstring key,
                                                 jstring json_path,
                                                 jstring value) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -285,7 +284,7 @@ Java_com_yongping_jmemcache_MemCache_patchJson(JNIEnv *env,
                                                jlong native_handle,
                                                jstring key,
                                                jstring patch) {
-    MemCache* cache = reinterpret_cast<MemCache*>(native_handle);
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
     const char* key_chars = env->GetStringUTFChars(key, nullptr);
     std::string key_str(key_chars);
     env->ReleaseStringUTFChars(key, key_chars);
@@ -295,4 +294,105 @@ Java_com_yongping_jmemcache_MemCache_patchJson(JNIEnv *env,
     env->ReleaseStringUTFChars(patch, patch_chars);
 
     return cache->patch_json(key_str,patch_str);
+}
+
+int processInt(JNIEnv *env, jobject jObject) {
+    jclass integerClass = env->FindClass("java/lang/Integer");
+    jmethodID intValue = env->GetMethodID(integerClass, "intValue", "()I");
+    jint value = env->CallIntMethod(jObject, intValue);
+    return value;
+}
+
+double processDouble(JNIEnv *env, jobject jObject) {
+    jclass doubleClass = env->FindClass("java/lang/Double");
+    jmethodID doubleValue = env->GetMethodID(doubleClass, "doubleValue", "()D");
+    jdouble value = env->CallDoubleMethod(jObject, doubleValue);
+    return value;
+}
+
+bool processBoolean(JNIEnv *env, jobject jObject) {
+    jclass booleanClass = env->FindClass("java/lang/Boolean");
+    jmethodID booleanValue = env->GetMethodID(booleanClass, "booleanValue", "()Z");
+    jboolean value = env->CallBooleanMethod(jObject, booleanValue);
+    return value;
+}
+
+std::string processString(JNIEnv *env, jobject jObject) {
+    auto jStr = (jstring) jObject;
+    const char *rawString = env->GetStringUTFChars(jStr, 0);
+    std::string result = std::string(rawString);
+    env->ReleaseStringUTFChars(jStr, rawString);
+    return result;
+}
+
+template <typename T>
+std::vector<std::pair<std::string, T>> convert(JNIEnv *env, jobject jList, T(*processFunc)(JNIEnv*, jobject)) {
+    std::vector<std::pair<std::string, T>> result;
+    // 由于用户可能会创建超大量的数据会造成oom，所以这里需要添加异常处理
+    try {
+        jclass listClass = env->FindClass("java/util/List");
+        jclass pairClass = env->FindClass("kotlin/Pair");
+
+        jmethodID listSize = env->GetMethodID(listClass, "size", "()I");
+        jmethodID listGet = env->GetMethodID(listClass, "get", "(I)Ljava/lang/Object;");
+        jmethodID pairFirst = env->GetMethodID(pairClass, "getFirst", "()Ljava/lang/Object;");
+        jmethodID pairSecond = env->GetMethodID(pairClass, "getSecond", "()Ljava/lang/Object;");
+
+        jint size = env->CallIntMethod(jList, listSize);
+        result.reserve(size);
+
+        for (jint i = 0; i < size; ++i) {
+            jobject jPair = env->CallObjectMethod(jList, listGet, i);
+            auto jStr = (jstring) env->CallObjectMethod(jPair, pairFirst);
+            jobject jObj = env->CallObjectMethod(jPair, pairSecond);
+
+            const char *rawString = env->GetStringUTFChars(jStr, 0);
+            std::string key = std::string(rawString);
+            env->ReleaseStringUTFChars(jStr, rawString);
+
+            T value = processFunc(env, jObj);
+
+            result.emplace_back(std::make_pair(key, value));
+        }
+    } catch (const std::exception& e) {
+        jclass newExcCls = env->FindClass("java/lang/RuntimeException");
+        if (newExcCls == nullptr) {
+            return result;
+        }
+        env->ThrowNew(newExcCls, e.what());
+    }
+    return result;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_putInts(JNIEnv *env, jobject thiz, jlong native_handle,
+                                             jobject pairs) {
+    auto cache = reinterpret_cast<MemCache*>(native_handle);
+    std::vector<std::pair<std::string, int>> intPairs = convert(env, pairs, &processInt);
+    return cache->put(intPairs);
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_putDoubles(JNIEnv *env, jobject thiz, jlong native_handle,
+                                                jobject pairs) {
+    auto cache = reinterpret_cast<MemCache*>(native_handle);
+    std::vector<std::pair<std::string, double>> doublePairs = convert(env, pairs, &processDouble);
+    return cache->put(doublePairs);
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_putBools(JNIEnv *env, jobject thiz, jlong native_handle,
+                                              jobject pairs) {
+    auto cache = reinterpret_cast<MemCache*>(native_handle);
+    std::vector<std::pair<std::string, bool>> boolPairs = convert(env, pairs, &processBoolean);
+    return cache->put(boolPairs);
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_putStrings(JNIEnv *env, jobject thiz, jlong native_handle,
+                                                jobject pairs) {
+    auto cache = reinterpret_cast<MemCache*>(native_handle);
+    std::vector<std::pair<std::string, std::string>> stringPairs = convert(env, pairs, &processString);
+    return cache->put(stringPairs);
 }

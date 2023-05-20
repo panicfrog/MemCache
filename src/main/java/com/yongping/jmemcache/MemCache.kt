@@ -17,6 +17,11 @@ class MemCache {
     private external fun putString(nativeHandle: Long, key: String, value: String): Int
     private external fun putBytes(nativeHandle: Long, key: String, value: ByteArray): Int
 
+    private external fun putInts(nativeHandle: Long, pairs: List<Pair<String, Int>>): Int
+    private external fun putDoubles(nativeHandle: Long, pairs: List<Pair<String, Double>>): Int
+    private external fun putBools(nativeHandle: Long, pairs: List<Pair<String, Boolean>>): Int
+    private external fun putStrings(nativeHandle: Long, pairs: List<Pair<String, String>>): Int
+
     private external fun getInt(nativeHandle: Long, key: String): Int?
     private external fun getDouble(nativeHandle: Long, key: String): Double?
     private external fun getBool(nativeHandle: Long, key: String): Boolean?
@@ -36,6 +41,11 @@ class MemCache {
     fun putBool(key: String, value: Boolean): Int = putBool(nativeHandle, key, value)
     fun putString(key: String, value: String): Int = putString(nativeHandle, key, value)
     fun putBytes(key: String, value: ByteArray): Int = putBytes(nativeHandle, key, value)
+
+    fun putInts(pairs: List<Pair<String, Int>>) = putInts(nativeHandle, pairs)
+    fun putDoubles(pairs: List<Pair<String, Double>>) = putDoubles(nativeHandle, pairs)
+    fun putBools(pairs: List<Pair<String, Boolean>>) = putBools(nativeHandle, pairs)
+    fun putStrings(pairs: List<Pair<String, String>>) = putStrings(nativeHandle, pairs)
 
     fun getInt(key: String): Int? = getInt(nativeHandle, key)
     fun getDouble(key: String): Double? = getDouble(nativeHandle, key)
