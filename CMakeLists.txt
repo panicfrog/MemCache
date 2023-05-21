@@ -20,23 +20,29 @@ endif()
 
 if(IS_ANDROID)
     set(MEMCACHE_SOURCE_CODE
-            src/MemCache.cpp
-            src/MemCache.hpp  # Moved MemCache.hpp to include
             include/MemCache_C.h
-            src/MemCache_C.cpp
+            include/MemCach_Cpp.hpp
             include/optional.hpp
+            src/MemCache.cpp
+            src/MemCache.hpp
+            src/MemCache_C.cpp
             src/sqlite3/sqlite3.c
             src/sqlite3/sqlite3.h
-            src/main/java/cpp/MemCacheJni.cpp include/MemCach_Cpp.hpp src/MemCache_Cpp.cpp)
+            src/main/java/cpp/MemCacheJni.cpp
+            src/MemCache_Cpp.cpp
+            src/Connect.hpp)
 else()
     set(MEMCACHE_SOURCE_CODE
-            src/MemCache.cpp
-            src/MemCache.hpp  # Moved MemCache.hpp to include
             include/MemCache_C.h
-            src/MemCache_C.cpp
             include/optional.hpp
+            include/MemCach_Cpp.hpp
+            src/MemCache.cpp
+            src/MemCache.hpp
+            src/MemCache_C.cpp
             src/sqlite3/sqlite3.c
-            src/sqlite3/sqlite3.h include/MemCach_Cpp.hpp src/MemCache_Cpp.cpp)
+            src/sqlite3/sqlite3.h
+            src/MemCache_Cpp.cpp
+            src/Connect.hpp)
 endif()
 
 if(IS_IOS)

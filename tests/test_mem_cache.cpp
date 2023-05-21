@@ -4,6 +4,7 @@
 
 #include <catch2/catch.hpp>
 #include "../src/MemCache.hpp"
+#include <thread>
 
 TEST_CASE("Test MemCache int storage and retrieval", "[mem_cache]") {
 auto cache = MemCache::getInstance();
@@ -187,3 +188,33 @@ REQUIRE(result == SQLITE_DONE);
 auto patch_value = cache->query_json(key, "$.key3");
 REQUIRE(patch_value == "value3");
 }
+
+#if MEM_CACHE_USE_MULTITHREAD
+TEST_CASE("Test MemCache multi-thread put, retrieval", "[mem_cache]") {
+    std::thread t1([](){
+        auto cache = MemCache::getInstance();
+        cache->put<std::string>("key1_t1", "value1");
+        cache->put<std::string>("key2_t1", "value2");
+        cache->put<std::string>("key3_t1", "value3");
+        cache->put<std::string>("key4_t1", "value4");
+        cache->put<std::string>("key5_t1", "value5");
+    });
+    std::thread t2([](){
+        auto cache = MemCache::getInstance();
+        cache->put<std::string>("key1_t1", "value1");
+        cache->put<std::string>("key2_t1", "value2");
+        cache->put<std::string>("key3_t1", "value3");
+        cache->put<std::string>("key4_t1", "value4");
+        cache->put<std::string>("key5_t1", "value5");
+    });
+
+    t1.join();
+    t2.join();
+
+    auto cache = MemCache::getInstance();
+    auto valuet1_5 = cache->get<std::string>("key5_t1");
+    auto valuet2_5 = cache->get<std::string>("key5_t1");
+    REQUIRE(valuet1_5 == "value5");
+    REQUIRE(valuet2_5 == "value5");
+}
+#endif

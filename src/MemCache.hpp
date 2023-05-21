@@ -1,6 +1,10 @@
 #ifndef _MEM_CACHE_HPP_
 #define _MEM_CACHE_HPP_
 
+#ifndef MEM_CACHE_USE_MULTITHREAD
+#define MEM_CACHE_USE_MULTITHREAD 0
+#endif
+
 #pragma once
 
 #include <cstdint>
@@ -11,9 +15,18 @@
 #include <utility>
 #include "sqlite3.h"
 #include "optional.hpp"
+#include "StmtWrapper.hpp"
+
+#if MEM_CACHE_USE_MULTITHREAD
+#include "Connect.hpp"
+#endif
 
 using nonstd::optional;
 using nonstd::nullopt;
+
+enum class StmtType {
+    get, put, get_json, put_json, modify_json, query_json, patch_json
+};
 
 template <typename T>
 using is_memcache_value_type = std::disjunction<
@@ -25,7 +38,11 @@ using is_memcache_value_type = std::disjunction<
 
 class MemCache {
 public:
+#if MEM_CACHE_USE_MULTITHREAD
+    ~MemCache() = default;
+#else
     ~MemCache();
+#endif
 
     static MemCache* getInstance() {
         std::call_once(flag_, []() { instance = new MemCache(); });
@@ -52,9 +69,29 @@ public:
 
 private:
     MemCache();
-    sqlite3* db;
+
+    static sqlite3_stmt* prepareStatements(StmtType type, sqlite3 *db);
+
+#if MEM_CACHE_USE_MULTITHREAD
+    static sqlite3* get_db();
+#endif
+
     static MemCache* instance;
     static std::once_flag flag_;
+
+    thread_local static std::unique_ptr<StmtWrapper> put_stmt;
+    thread_local static std::unique_ptr<StmtWrapper> get_stmt;
+    thread_local static std::unique_ptr<StmtWrapper> put_json_stmt;
+    thread_local static std::unique_ptr<StmtWrapper> get_json_stmt;
+    thread_local static std::unique_ptr<StmtWrapper> query_json_stmt;
+    thread_local static std::unique_ptr<StmtWrapper> modify_json_stmt;
+    thread_local static std::unique_ptr<StmtWrapper> patch_json_stmt;
+
+#if MEM_CACHE_USE_MULTITHREAD
+    thread_local static std::unique_ptr<Connect> db_connect;
+#else
+    sqlite3* db{};
+#endif
 };
 
 #endif // _MEM_CACHE_HPP_
