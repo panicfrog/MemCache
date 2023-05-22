@@ -5,6 +5,8 @@
 #include <string>
 #include "../../../MemCache.hpp"
 
+using namespace memcache;
+
 extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_yongping_jmemcache_MemCache_nativeMethod(JNIEnv *env, jobject thiz) {

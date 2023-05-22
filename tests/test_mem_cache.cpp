@@ -6,6 +6,8 @@
 #include "../src/MemCache.hpp"
 #include <thread>
 
+using namespace memcache;
+
 TEST_CASE("Test MemCache int storage and retrieval", "[mem_cache]") {
 auto cache = MemCache::getInstance();
 

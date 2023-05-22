@@ -8,21 +8,22 @@
 #include "sqlite3.h"
 //#include <iostream>
 
-class Connect {
-public:
-    explicit Connect(sqlite3* db): db{db} {}
+namespace memcache {
+    class Connect {
+    public:
+        explicit Connect(sqlite3 *db) : db{db} {}
 
-    ~Connect() {
+        ~Connect() {
 //        std::cout << "close db" << std::endl;
-        sqlite3_close(db);
-    }
+            sqlite3_close(db);
+        }
 
-    [[nodiscard]] sqlite3* get() const {
-        return db;
-    }
+        [[nodiscard]] sqlite3 *get() const {
+            return db;
+        }
 
-private:
-    sqlite3 * db {};
-};
-
+    private:
+        sqlite3 *db{};
+    };
+}
 #endif //MEMCACHE_CONNECT_H

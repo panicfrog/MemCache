@@ -6,6 +6,7 @@
 
 using nonstd::optional;
 using nonstd::nullopt;
+using namespace memcache;
 
 extern int MemCache_put_string(const char* key, const char* value) {
     auto c = MemCache::getInstance();

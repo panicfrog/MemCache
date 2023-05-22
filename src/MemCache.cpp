@@ -11,6 +11,8 @@
 using nonstd::optional;
 using nonstd::nullopt;
 
+namespace memcache {
+
 MemCache* MemCache::instance = nullptr;
 std::once_flag MemCache::flag_;
 
@@ -357,3 +359,5 @@ template optional<int> MemCache::get<int>(const std::string& key);
 template optional<double> MemCache::get<double>(const std::string& key);
 template optional<bool> MemCache::get<bool>(const std::string& key);
 template optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(const std::string& key);
+
+}
