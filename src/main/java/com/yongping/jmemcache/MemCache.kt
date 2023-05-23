@@ -27,12 +27,14 @@ class MemCache {
     private external fun getBool(nativeHandle: Long, key: String): Boolean?
     private external fun getString(nativeHandle: Long, key: String): String?
     private external fun getBytes(nativeHandle: Long, key: String): ByteArray?
+    private external fun deleteValue(nativeHandle: Long, key: String): Int
 
     private external fun putJson(nativeHandle: Long, key: String, json: String): Int
     private external fun getJson(nativeHandle: Long, key: String): String?
     private external fun queryJson(nativeHandle: Long, key: String, jsonPath: String): String?
     private external fun modifyJson(nativeHandle: Long, key: String, jsonPath: String, value: String): Int
     private external fun patchJson(nativeHandle: Long, key: String, patch: String): Int
+    private external fun deleteJson(nativeHandle: Long, key: String): Int
 
     private val nativeHandle: Long = createNativeInstance()
 
@@ -52,11 +54,13 @@ class MemCache {
     fun getBool(key: String): Boolean? = getBool(nativeHandle, key)
     fun getString(key: String): String? = getString(nativeHandle, key)
     fun getBytes(key: String): ByteArray? = getBytes(nativeHandle, key)
+    fun deleteValue(key: String): Int = deleteValue(nativeHandle, key)
 
     fun putJson(key: String, json: String): Int = putJson(nativeHandle, key, json)
     fun getJson(key: String): String? = getJson(nativeHandle, key)
     fun queryJson(key: String, jsonPath: String): String? = queryJson(nativeHandle, key, jsonPath)
     fun modifyJson(key: String, jsonPath: String, value: String): Int = modifyJson(nativeHandle, key, jsonPath, value)
     fun patchJson(key: String, patch: String): Int = patchJson(nativeHandle, key, patch)
+    fun deleteJson(key: String): Int = deleteJson(nativeHandle, key)
 
 }

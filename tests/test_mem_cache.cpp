@@ -191,6 +191,20 @@ auto patch_value = cache->query_json(key, "$.key3");
 REQUIRE(patch_value == "value3");
 }
 
+TEST_CASE("Test MemCache JSON delete", "[mem_cache]") {
+    auto cache = MemCache::getInstance();
+    std::string key = "json_key";
+    std::string json = R"({"key1": "value1", "key2": 42})";
+    int result = cache->put_json(key, json);
+    REQUIRE(result == SQLITE_DONE);
+    auto retrieved_json = cache->get_json(key);
+    REQUIRE(retrieved_json == json);
+    auto deleteResult = cache->deleteJson(key);
+    REQUIRE(deleteResult == SQLITE_DONE);
+    auto deleteded = cache->get_json(key);
+    REQUIRE(!deleteded.has_value());
+}
+
 #if MEM_CACHE_USE_MULTITHREAD
 TEST_CASE("Test MemCache multi-thread put, retrieval", "[mem_cache]") {
     std::thread t1([](){

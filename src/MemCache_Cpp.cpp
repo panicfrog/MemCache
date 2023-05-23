@@ -36,6 +36,10 @@ namespace memcache {
         return MemCache::getInstance()->put<std::string>(kvs);
     }
 
+    int deleteValue(const std::string& key) {
+        return MemCache::getInstance()->deleteValue(key);
+    }
+
     template<>
     int put<int>(const std::vector<std::pair<std::string, int>> &kvs) {
         return MemCache::getInstance()->put<int>(kvs);
@@ -79,6 +83,10 @@ namespace memcache {
     template<>
     optional<std::vector<std::uint8_t>> get<std::vector<std::uint8_t>>(const std::string &key) {
         return MemCache::getInstance()->get<std::vector<std::uint8_t>>(key);
+    }
+
+    int deleteJson(const std::string& key) {
+        return MemCache::getInstance()->deleteJson(key);
     }
 
     int put_json(const std::string &key, const std::string &json) {

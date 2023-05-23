@@ -58,6 +58,11 @@ final public class MemCache {
     }
   }
   
+  public func delete(for key: String) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    return MemCache_delete_value(cKey)
+  }
+  
   public func put(value: Int32, forKey key: String) -> Int32 {
     let cKey = key.cString(using: .utf8)
     return MemCache_put_int(cKey, value)
@@ -121,6 +126,11 @@ final public class MemCache {
         MemCache_put_bools(keysBuffer, valuesBuffer.baseAddress, size)
       }
     }
+  }
+  
+  public func deleteJson(for key: String) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    return MemCache_delete_json(key)
   }
   
   public func putJson(value: String, forKey key: String) -> Int32 {

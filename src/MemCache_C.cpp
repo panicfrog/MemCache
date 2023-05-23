@@ -33,6 +33,11 @@ extern int MemCache_put_bytes(const char* key, const uint8_t* bytes, size_t size
     return c->put(key, std::vector<uint8_t>(bytes, bytes + size));
 }
 
+ int MemCache_delete_value(const char* key) {
+    auto c = MemCache::getInstance();
+    return c->deleteValue(key);
+}
+
 int MemCache_put_strings(const char* const* key, const char* const* value, size_t size) {
     std::vector<std::pair<std::string, std::string>> kvs;
     kvs.reserve(size);
@@ -132,6 +137,11 @@ extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t*) {
         *size = 0;
         return false;
     }
+}
+
+extern int MemCache_delete_json(const char* key) {
+    auto c = MemCache::getInstance();
+    return c->deleteJson(key);
 }
 
 extern int MemCache_put_json(const char* key, const char* json) {

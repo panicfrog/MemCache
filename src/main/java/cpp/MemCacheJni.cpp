@@ -398,3 +398,28 @@ Java_com_yongping_jmemcache_MemCache_putStrings(JNIEnv *env, jobject thiz, jlong
     std::vector<std::pair<std::string, std::string>> stringPairs = convert(env, pairs, &processString);
     return cache->put(stringPairs);
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_deleteValue(JNIEnv *env, jobject thiz, jlong native_handle,
+                                                 jstring key) {
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
+    const char* key_chars = env->GetStringUTFChars(key, nullptr);
+    std::string key_str(key_chars);
+    env->ReleaseStringUTFChars(key, key_chars);
+
+    auto result = cache->deleteValue(key_str);
+    return result;
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_deleteJson(JNIEnv *env, jobject thiz, jlong native_handle,
+                                                jstring key) {
+    auto* cache = reinterpret_cast<MemCache*>(native_handle);
+    const char* key_chars = env->GetStringUTFChars(key, nullptr);
+    std::string key_str(key_chars);
+    env->ReleaseStringUTFChars(key, key_chars);
+
+    auto result = cache->deleteJson(key_str);
+    return result;
+}

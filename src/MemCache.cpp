@@ -23,6 +23,9 @@ thread_local std::unique_ptr<StmtWrapper> MemCache::put_json_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::modify_json_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::query_json_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::patch_json_stmt = nullptr;
+thread_local std::unique_ptr<StmtWrapper> MemCache::delete_value_stmt = nullptr;
+thread_local std::unique_ptr<StmtWrapper> MemCache::delete_json_stmt = nullptr;
+
 #if MEM_CACHE_USE_MULTITHREAD
 thread_local std::unique_ptr<Connect> MemCache::db_connect = nullptr;
 #endif
@@ -78,6 +81,11 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
                 get_stmt = std::make_unique<StmtWrapper>(db, "SELECT type, value FROM cache WHERE key = ? AND type = ?;");
             }
             return get_stmt->get();
+        case StmtType::delete_value:
+            if (!delete_value_stmt) {
+                delete_value_stmt = std::make_unique<StmtWrapper>(db, "DELETE FROM cache WHERE key = ?;");
+            }
+            return delete_value_stmt->get();
         case StmtType::get_json:
             if (!get_json_stmt) {
                 get_json_stmt = std::make_unique<StmtWrapper>(db, "SELECT json FROM json_cache WHERE key = ?;");
@@ -88,6 +96,11 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
                 put_json_stmt = std::make_unique<StmtWrapper>(db, "INSERT OR REPLACE INTO json_cache (key, json) VALUES (?, ?);");
             }
             return put_json_stmt->get();
+        case StmtType::delete_json:
+            if (!delete_json_stmt) {
+                delete_json_stmt = std::make_unique<StmtWrapper>(db, "DELETE FROM json_cache WHERE key = ?");
+            }
+            return delete_json_stmt->get();
         case StmtType::query_json:
             if (!query_json_stmt) {
                 query_json_stmt = std::make_unique<StmtWrapper>(db, "SELECT json_extract(json, ? ) FROM json_cache WHERE key = ?;");
@@ -133,6 +146,28 @@ optional<std::string> MemCache::get_json(const std::string& key) {
         return  json;
     }
     return nullopt;
+}
+
+int MemCache::deleteValue(const std::string &key) {
+#if MEM_CACHE_USE_MULTITHREAD
+    auto db = get_db();
+#endif
+    auto stmt = prepareStatements(StmtType::delete_value, db);
+    sqlite3_reset(stmt);
+    sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
+    auto result = sqlite3_step(stmt);
+    return result;
+}
+
+int MemCache::deleteJson(const std::string &key) {
+#if MEM_CACHE_USE_MULTITHREAD
+    auto db = get_db();
+#endif
+    auto stmt = prepareStatements(StmtType::delete_json, db);
+    sqlite3_reset(stmt);
+    sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
+    auto result = sqlite3_step(stmt);
+    return result;
 }
 
 optional<std::string>  MemCache::query_json(const std::string& key, const std::string& json_path) {

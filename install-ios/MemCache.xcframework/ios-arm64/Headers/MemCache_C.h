@@ -23,11 +23,15 @@ extern "C" {
     extern int MemCache_put_doubles(const char* const* key, const double* value, size_t size);
     extern int MemCache_put_bools(const char* const* key, const bool* value, size_t size);
 
+    extern int MemCache_delete_value(const char* key);
+
     extern bool MemCache_get_string(const char* key,  char ** value);
     extern bool MemCache_get_int(const char* key, int *value);
     extern bool MemCache_get_double(const char* key, double *value);
     extern bool MemCache_get_bool(const char* key, bool *value);
     extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t*);
+
+    extern int MemCache_delete_json(const char* key);
 
     extern int MemCache_put_json(const char* key, const char* json);
     extern bool MemCache_get_json(const char* key, char **value);
