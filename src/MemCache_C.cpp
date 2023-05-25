@@ -124,14 +124,15 @@ extern bool MemCache_get_bool(const char* key, bool *value) {
     }
 }
 
-extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t*) {
+extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t** result) {
     auto c = MemCache::getInstance();
     optional<std::vector<uint8_t>> v = c->get<std::vector<uint8_t>>(key);
     if (v.has_value()) {
         std::vector<uint8_t> bytes = v.value();
-        auto* result = new uint8_t[bytes.size()];
-        std::copy(bytes.begin(), bytes.end(), result);
+        auto *innerResult = (uint8_t *)malloc(bytes.size());
+        std::copy(bytes.begin(), bytes.end(), innerResult);
         *size = bytes.size();
+        *result = innerResult;
         return true;
     } else {
         *size = 0;

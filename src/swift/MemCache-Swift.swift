@@ -22,6 +22,7 @@ final public class MemCache {
     } else {
       value = nil
     }
+    cValue?.deallocate()
     return value
   }
   
@@ -58,6 +59,18 @@ final public class MemCache {
     }
   }
   
+  public func getData(forKey key: String) -> Data? {
+    var size: size_t = 0
+    var result: UnsafeMutablePointer<UInt8>?
+    let successed = MemCache_get_bytes(key, &size, &result)
+    guard let result = result, successed else {
+      return nil
+    }
+    let data = Data(bytes: result, count: Int(size))
+    result.deallocate()
+    return data
+  }
+  
   public func delete(for key: String) -> Int32 {
     let cKey = key.cString(using: .utf8)
     return MemCache_delete_value(cKey)
@@ -82,6 +95,18 @@ final public class MemCache {
     let cValue = value.cString(using: .utf8)
     let cKey = key.cString(using: .utf8)
     return MemCache_put_string(cKey, cValue)
+  }
+  
+  public func put(value: Data, forKey key: String) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    let size = value.count
+    return value.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> Int32 in
+      if let baseAddress = bytes.baseAddress {
+        return MemCache_put_bytes(cKey, baseAddress.assumingMemoryBound(to: UInt8.self), size)
+      } else {
+        return -1
+      }
+    }
   }
 
   public func put(stringPairs: __owned [(String, String)]) throws -> Int32 {

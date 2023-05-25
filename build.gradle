@@ -70,6 +70,7 @@ afterEvaluate {
         artifactId 'MemCache'
         version '0.0.1'
         artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+//        artifact("$buildDir/outputs/aar/${project.getName()}-debug.aar")
       }
 
 

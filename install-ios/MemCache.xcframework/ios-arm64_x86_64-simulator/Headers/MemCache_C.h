@@ -29,7 +29,7 @@ extern "C" {
     extern bool MemCache_get_int(const char* key, int *value);
     extern bool MemCache_get_double(const char* key, double *value);
     extern bool MemCache_get_bool(const char* key, bool *value);
-    extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t*);
+    extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t** result);
 
     extern int MemCache_delete_json(const char* key);
 
