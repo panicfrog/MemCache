@@ -155,7 +155,7 @@ final public class MemCache {
   
   public func deleteJson(for key: String) -> Int32 {
     let cKey = key.cString(using: .utf8)
-    return MemCache_delete_json(key)
+    return MemCache_delete_json(cKey)
   }
   
   public func putJson(value: String, forKey key: String) -> Int32 {
