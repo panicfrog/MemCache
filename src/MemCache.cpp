@@ -1,6 +1,5 @@
 
 #include "MemCache.hpp"
-#include <iostream>
 
 #define CACHE_TYPE_INT 1
 #define CACHE_TYPE_DOUBLE 2
@@ -214,7 +213,7 @@ int MemCache::patch_json(const std::string& key, const std::string& patch) {
 
 template<typename T, typename>
 int MemCache::put(const std::vector<std::pair<std::string, T>>& kvs) {
-    char *zErrMsg = nullptr;
+    UNUSED char *zErrMsg = nullptr;
 #if MEM_CACHE_USE_MULTITHREAD
     auto db = get_db();
 #endif
@@ -222,58 +221,58 @@ int MemCache::put(const std::vector<std::pair<std::string, T>>& kvs) {
     if (zErrMsg != nullptr) {
         return 0;
     }
-    auto stmt = prepareStatements(StmtType::put, db);
+    UNUSED auto stmt = prepareStatements(StmtType::put, db);
     sqlite3_reset(stmt);
    if constexpr (std::is_same_v<T, int>) {
-       for(const auto& kv : kvs ) {
+       for(UNUSED const auto& kv : kvs ) {
            sqlite3_bind_text(stmt, 1, kv.first.c_str(), -1, SQLITE_STATIC);
            sqlite3_bind_int(stmt, 2, CACHE_TYPE_INT);
            sqlite3_bind_int(stmt, 3, kv.second);
-           int result = sqlite3_step(stmt);
+           UNUSED int result = sqlite3_step(stmt);
            if (result != SQLITE_DONE) {
                return result;
            }
            sqlite3_reset(stmt);
        }
    } else if constexpr (std::is_same_v<T, double>) {
-       for(const auto& kv : kvs ) {
+       for(UNUSED const auto& kv : kvs ) {
            sqlite3_bind_text(stmt, 1, kv.first.c_str(), -1, SQLITE_STATIC);
            sqlite3_bind_int(stmt, 2, CACHE_TYPE_DOUBLE);
            sqlite3_bind_double(stmt, 3, kv.second);
-           int result = sqlite3_step(stmt);
+           UNUSED int result = sqlite3_step(stmt);
            if (result != SQLITE_DONE) {
                return result;
            }
            sqlite3_reset(stmt);
        }
    } else if constexpr (std::is_same_v<T, bool>) {
-       for(const auto& kv : kvs ) {
+       for(UNUSED const auto& kv : kvs ) {
            sqlite3_bind_text(stmt, 1, kv.first.c_str(), -1, SQLITE_STATIC);
            sqlite3_bind_int(stmt, 2, CACHE_TYPE_BOOL);
            sqlite3_bind_int(stmt, 3, static_cast<int>(kv.second));
-           int result = sqlite3_step(stmt);
+           UNUSED int result = sqlite3_step(stmt);
            if (result != SQLITE_DONE) {
                return result;
            }
            sqlite3_reset(stmt);
        }
    } else if constexpr (std::is_same_v<T, std::string>) {
-       for(const auto& kv : kvs ) {
+       for(UNUSED const auto& kv : kvs ) {
            sqlite3_bind_text(stmt, 1, kv.first.c_str(), -1, SQLITE_STATIC);
            sqlite3_bind_int(stmt, 2, CACHE_TYPE_STRING);
            sqlite3_bind_text(stmt, 3, kv.second.c_str(), -1, SQLITE_STATIC);
-           int result = sqlite3_step(stmt);
+           UNUSED int result = sqlite3_step(stmt);
            if (result != SQLITE_DONE) {
                return result;
            }
            sqlite3_reset(stmt);
        }
    } else if constexpr (std::is_same_v<T, std::vector<std::uint8_t>>) {
-       for(auto kv : kvs ) {
+       for(UNUSED auto kv : kvs ) {
            sqlite3_bind_text(stmt, 1, kv.first.c_str(), -1, SQLITE_STATIC);
            sqlite3_bind_int(stmt, 2, CACHE_TYPE_UINT8_ARRAY);
            sqlite3_bind_blob(stmt, 3, std::data(kv.second), kv.second.size(), SQLITE_STATIC);
-           int result = sqlite3_step(stmt);
+           UNUSED int result = sqlite3_step(stmt);
            if (result != SQLITE_DONE) {
                return result;
            }
@@ -375,24 +374,5 @@ optional<T> MemCache::get(const std::string &key) {
         return nullopt;
     }
 }
-
-// Explicit template instantiation for the supported types
-template int MemCache::put<std::string>(const std::string& key, const std::string& value);
-template int MemCache::put<int>(const std::string& key, const int& value);
-template int MemCache::put<double>(const std::string& key, const double& value);
-template int MemCache::put<bool>(const std::string& key, const bool& value);
-template int MemCache::put<std::vector<std::uint8_t>>(const std::string& key, const std::vector<std::uint8_t>& value);
-
-template int MemCache::put<std::string>(const std::vector<std::pair<std::string, std::string>>& kvs);
-template int MemCache::put<int>(const std::vector<std::pair<std::string, int>>& kvs);
-template int MemCache::put<double>(const std::vector<std::pair<std::string,double>>& kvs);
-template int MemCache::put<bool>(const std::vector<std::pair<std::string, bool>>& kvs);
-template int MemCache::put<std::vector<std::uint8_t>>(const std::vector<std::pair<std::string, std::vector<std::uint8_t>>>& kvs);
-
-template optional<std::string> MemCache::get<std::string>(const std::string& key);
-template optional<int> MemCache::get<int>(const std::string& key);
-template optional<double> MemCache::get<double>(const std::string& key);
-template optional<bool> MemCache::get<bool>(const std::string& key);
-template optional<std::vector<std::uint8_t>> MemCache::get<std::vector<std::uint8_t>>(const std::string& key);
 
 }

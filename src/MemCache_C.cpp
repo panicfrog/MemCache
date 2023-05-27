@@ -8,76 +8,87 @@ using nonstd::optional;
 using nonstd::nullopt;
 using namespace memcache;
 
+UNUSED
 extern int MemCache_put_string(const char* key, const char* value) {
     auto c = MemCache::getInstance();
     return c->put(key, std::string(value));
 }
 
+UNUSED
 extern int MemCache_put_int(const char* key, int value) {
     auto c = MemCache::getInstance();
     return c->put(key, value);
 }
 
+UNUSED
 extern int MemCache_put_double(const char* key, double value) {
     auto c = MemCache::getInstance();
     return c->put(key, value);
 }
 
+UNUSED
 extern int MemCache_put_bool(const char* key, bool value) {
     auto c = MemCache::getInstance();
     return c->put(key, value);
 }
 
+UNUSED
 extern int MemCache_put_bytes(const char* key, const uint8_t* bytes, size_t size) {
     auto c = MemCache::getInstance();
     return c->put(key, std::vector<uint8_t>(bytes, bytes + size));
 }
 
+UNUSED
  int MemCache_delete_value(const char* key) {
     auto c = MemCache::getInstance();
     return c->deleteValue(key);
 }
 
+UNUSED
 int MemCache_put_strings(const char* const* key, const char* const* value, size_t size) {
     std::vector<std::pair<std::string, std::string>> kvs;
     kvs.reserve(size);
     for(int i = 0; i < size; ++i) {
-        kvs.emplace_back(std::pair{std::string {*(key + i)}, std::string {*(value + i)}});
+        kvs.emplace_back(std::string {*(key + i)}, std::string {*(value + i)});
     }
     auto c = MemCache::getInstance();
     return c->put(kvs);
 }
 
+UNUSED
 int MemCache_put_ints(const char* const* key, const int* value, size_t size) {
     std::vector<std::pair<std::string, int>> kvs;
     kvs.reserve(size);
     for(int i = 0; i < size; ++i) {
-       kvs.emplace_back(std::pair{std::string {*(key + i)}, *(value + i)});
+       kvs.emplace_back(std::string {*(key + i)}, *(value + i));
     }
     auto c = MemCache::getInstance();
     return c->put(kvs);
 }
 
+UNUSED
 int MemCache_put_doubles(const char* const* key, const double* value, size_t size) {
     std::vector<std::pair<std::string, double>> kvs;
     kvs.reserve(size);
     for(int i = 0; i < size; ++i) {
-        kvs.emplace_back(std::pair{std::string {*(key + i)}, *(value + i)});
+        kvs.emplace_back(std::string {*(key + i)}, *(value + i));
     }
     auto c = MemCache::getInstance();
     return c->put(kvs);
 }
 
+UNUSED
 int MemCache_put_bools(const char* const* key, const bool* value, size_t size) {
     std::vector<std::pair<std::string, bool>> kvs;
     kvs.reserve(size);
     for(int i = 0; i < size; ++i) {
-        kvs.emplace_back(std::pair{std::string {*(key + i)}, *(value + i)});
+        kvs.emplace_back(std::string {*(key + i)}, *(value + i));
     }
     auto c = MemCache::getInstance();
     return c->put(kvs);
 }
 
+UNUSED
 extern bool MemCache_get_string(const char* key, char **value) {
     auto c = MemCache::getInstance();
     optional<std::string> v = c->get<std::string>(key);
@@ -91,6 +102,7 @@ extern bool MemCache_get_string(const char* key, char **value) {
     }
 }
 
+UNUSED
 extern bool MemCache_get_int(const char* key, int *value) {
     auto c = MemCache::getInstance();
     optional<int> v = c->get<int>(key);
@@ -102,6 +114,7 @@ extern bool MemCache_get_int(const char* key, int *value) {
     }
 }
 
+UNUSED
 extern bool MemCache_get_double(const char* key, double *value) {
     auto c = MemCache::getInstance();
     optional<double> v = c->get<double>(key);
@@ -113,6 +126,7 @@ extern bool MemCache_get_double(const char* key, double *value) {
     }
 }
 
+UNUSED
 extern bool MemCache_get_bool(const char* key, bool *value) {
     auto c = MemCache::getInstance();
     optional<bool> v = c->get<bool>(key);
@@ -124,6 +138,7 @@ extern bool MemCache_get_bool(const char* key, bool *value) {
     }
 }
 
+UNUSED
 extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t** result) {
     auto c = MemCache::getInstance();
     optional<std::vector<uint8_t>> v = c->get<std::vector<uint8_t>>(key);
@@ -140,16 +155,19 @@ extern bool MemCache_get_bytes(const char* key, size_t* size, uint8_t** result) 
     }
 }
 
+UNUSED
 extern int MemCache_delete_json(const char* key) {
     auto c = MemCache::getInstance();
     return c->deleteJson(key);
 }
 
+UNUSED
 extern int MemCache_put_json(const char* key, const char* json) {
     auto c = MemCache::getInstance();
     return c->put_json(key, json);
 }
 
+UNUSED
 extern bool MemCache_get_json(const char* key, char **value) {
     auto c = MemCache::getInstance();
     optional<std::string> v = c->get_json(key);
@@ -163,7 +181,7 @@ extern bool MemCache_get_json(const char* key, char **value) {
     }
 }
 
-
+UNUSED
 extern bool MemCache_query_json(const char* key, const char* json_path, char **value) {
     auto c = MemCache::getInstance();
     optional<std::string> v = c->query_json(key, json_path);
@@ -177,11 +195,13 @@ extern bool MemCache_query_json(const char* key, const char* json_path, char **v
     }
 }
 
+UNUSED
 extern int MemCache_modify_json(const char* key, const char* json_path, const char* value) {
     auto c = MemCache::getInstance();
     return c->modify_json(key, json_path, value);
 }
 
+UNUSED
 extern int MemCache_patch_json(const char* key, const char* patch) {
     auto c = MemCache::getInstance();
     return c->patch_json(key, patch);

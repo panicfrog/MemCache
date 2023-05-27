@@ -5,6 +5,14 @@
 #define MEM_CACHE_USE_MULTITHREAD 0
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define UNUSED __attribute__((unused))
+#elif defined(_MSC_VER)
+#define UNUSED [[maybe_unused]]
+#else
+#define UNUSED
+#endif
+
 #pragma once
 
 #include <cstdint>

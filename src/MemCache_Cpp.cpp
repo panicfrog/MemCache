@@ -36,6 +36,7 @@ namespace memcache {
         return MemCache::getInstance()->put<std::string>(kvs);
     }
 
+    UNUSED
     int deleteValue(const std::string& key) {
         return MemCache::getInstance()->deleteValue(key);
     }
@@ -85,26 +86,32 @@ namespace memcache {
         return MemCache::getInstance()->get<std::vector<std::uint8_t>>(key);
     }
 
+    UNUSED
     int deleteJson(const std::string& key) {
         return MemCache::getInstance()->deleteJson(key);
     }
 
+    UNUSED
     int put_json(const std::string &key, const std::string &json) {
         return MemCache::getInstance()->put_json(key, json);
     }
 
+    UNUSED
     optional<std::string> get_json(const std::string &key) {
         return MemCache::getInstance()->get_json(key);
     }
 
+    UNUSED
     optional<std::string> query_json(const std::string &key, const std::string &json_path) {
         return MemCache::getInstance()->query_json(key, json_path);
     }
 
+    UNUSED
     int modify_json(const std::string &key, const std::string &json_path, const std::string &value) {
         return MemCache::getInstance()->modify_json(key, json_path, value);
     }
 
+    UNUSED
     int patch_json(const std::string &key, const std::string &patch) {
         return MemCache::getInstance()->patch_json(key, patch);
     }
