@@ -116,4 +116,22 @@ namespace memcache {
         return MemCache::getInstance()->patch_json(key, patch);
     }
 
+    UNUSED
+    int value_tracing(const std::string &key, int trace_type) {
+        auto ng = static_cast<int>(TraceType::NativeGet);
+        auto np = static_cast<int>(TraceType::NativePut);
+        auto t = (ng & trace_type) | (np & trace_type);
+        auto traceType = static_cast<TraceType>(t);
+        MemCache::getInstance()->tracing(key, traceType);
+    }
+
+    UNUSED
+    int remove_tracing(const std::string &key, int trace_type) {
+        auto ng = static_cast<int>(TraceType::NativeGet);
+        auto np = static_cast<int>(TraceType::NativePut);
+        auto t = (ng & trace_type) | (np & trace_type);
+        auto traceType = static_cast<TraceType>(t);
+        MemCache::getInstance()->remove_tracing(key, traceType);
+    }
+
 }

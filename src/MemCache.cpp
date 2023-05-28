@@ -1,16 +1,16 @@
 
 #include "MemCache.hpp"
 
-#define CACHE_TYPE_INT 1
-#define CACHE_TYPE_DOUBLE 2
-#define CACHE_TYPE_BOOL 3
-#define CACHE_TYPE_STRING 4
-#define CACHE_TYPE_UINT8_ARRAY 5
-
 using nonstd::optional;
 using nonstd::nullopt;
 
 namespace memcache {
+
+constexpr auto CACHE_TYPE_INT = 1;
+constexpr auto CACHE_TYPE_DOUBLE = 2;
+constexpr auto CACHE_TYPE_BOOL = 3;
+constexpr auto CACHE_TYPE_STRING = 4;
+constexpr auto CACHE_TYPE_UINT8_ARRAY = 5;
 
 MemCache* MemCache::instance = nullptr;
 std::once_flag MemCache::flag_;
@@ -24,6 +24,8 @@ thread_local std::unique_ptr<StmtWrapper> MemCache::query_json_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::patch_json_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::delete_value_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::delete_json_stmt = nullptr;
+thread_local std::unique_ptr<StmtWrapper> MemCache::value_tracing_stmt = nullptr;
+thread_local std::unique_ptr<StmtWrapper> MemCache::value_remove_tracing_stmt = nullptr;
 
 #if MEM_CACHE_USE_MULTITHREAD
 thread_local std::unique_ptr<Connect> MemCache::db_connect = nullptr;
@@ -77,7 +79,7 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
             return put_stmt->get();
         case StmtType::get:
             if (!get_stmt) {
-                get_stmt = std::make_unique<StmtWrapper>(db, "SELECT type, value FROM cache WHERE key = ? AND type = ?;");
+                get_stmt = std::make_unique<StmtWrapper>(db, "SELECT type, value FROM cache WHERE key = ? AND type & ? = ?;");
             }
             return get_stmt->get();
         case StmtType::delete_value:
@@ -115,6 +117,16 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
                 patch_json_stmt = std::make_unique<StmtWrapper>(db, "UPDATE json_cache SET json = (CASE WHEN json_valid(?) THEN json_patch(json, ?) ELSE json END) WHERE key = ?;");
             }
             return patch_json_stmt->get();
+        case StmtType::value_tracing:
+            if (!value_tracing_stmt) {
+                value_tracing_stmt = std::make_unique<StmtWrapper>(db, "UPDATE cache SET type = type | ? WHERE key = ?;");
+            }
+            return value_tracing_stmt->get();
+        case StmtType::value_remove_tracing:
+            if (!value_remove_tracing_stmt) {
+                value_remove_tracing_stmt = std::make_unique<StmtWrapper>(db, "UPDATE cache SET type = type & ? WHERE key = ?;");
+            }
+            return value_remove_tracing_stmt->get();
     }
 }
 
@@ -323,40 +335,64 @@ optional<T> MemCache::get(const std::string &key) {
     auto stmt = prepareStatements(StmtType::get, db);
     sqlite3_reset(stmt);
     sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
+    auto tem = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
+    sqlite3_bind_int(stmt, 2, tem);
     if constexpr (std::is_same_v<T, int>) {
-        sqlite3_bind_int(stmt, 2, CACHE_TYPE_INT);
+        sqlite3_bind_int(stmt, 3, CACHE_TYPE_INT);
     } else if constexpr (std::is_same_v<T, double>) {
-        sqlite3_bind_int(stmt, 2, CACHE_TYPE_DOUBLE);
+        sqlite3_bind_int(stmt, 3, CACHE_TYPE_DOUBLE);
     } else if constexpr (std::is_same_v<T, bool>) {
-        sqlite3_bind_int(stmt, 2, CACHE_TYPE_BOOL);
+        sqlite3_bind_int(stmt, 3, CACHE_TYPE_BOOL);
     } else if constexpr (std::is_same_v<T, std::string>) {
-        sqlite3_bind_int(stmt, 2, CACHE_TYPE_STRING);
+        sqlite3_bind_int(stmt, 3, CACHE_TYPE_STRING);
     } else if constexpr (std::is_same_v<T, std::vector<std::uint8_t>>) {
-        sqlite3_bind_int(stmt, 2, CACHE_TYPE_UINT8_ARRAY);
+        sqlite3_bind_int(stmt, 3, CACHE_TYPE_UINT8_ARRAY);
     }
 
     auto result = sqlite3_step(stmt);
     if (result == SQLITE_ROW) {
-        int type = sqlite3_column_int(stmt, 0);
-
+        int _type = sqlite3_column_int(stmt, 0);
+        constexpr auto _tem = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
+        int type = _type & _tem;
+        bool tracing_get = _type & static_cast<int>(TraceType::NativeGet);
         if constexpr (std::is_same_v<T, int>) {
             if (type == CACHE_TYPE_INT) {
                 int value = sqlite3_column_int(stmt, 1);
+                if (tracing_get) {
+                    pool.enqueue([key, value, type] (){
+                        MemCache_getTracing(key.c_str(), &value, 0, type | static_cast<int>(TraceType::NativeGet));
+                    });
+                }
                 return value;
             }
         } else if constexpr (std::is_same_v<T, double>) {
             if (type == CACHE_TYPE_DOUBLE) {
                 double value = sqlite3_column_double(stmt, 1);
+                if (tracing_get) {
+                    pool.enqueue([key, value, type] (){
+                        MemCache_getTracing(key.c_str(), &value, 0, type | static_cast<int>(TraceType::NativeGet));
+                    });
+                }
                 return value;
             }
         } else if constexpr (std::is_same_v<T, bool>) {
             if (type == CACHE_TYPE_BOOL) {
                 bool value = static_cast<bool>(sqlite3_column_int(stmt, 1));
+                if (tracing_get) {
+                    pool.enqueue([key, value, type] (){
+                        MemCache_getTracing(key.c_str(), &value, 0, type | static_cast<int>(TraceType::NativeGet));
+                    });
+                }
                 return value;
             }
         } else if constexpr (std::is_same_v<T, std::string>) {
             if (type == CACHE_TYPE_STRING) {
                 std::string value = std::string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1)));
+                if (tracing_get) {
+                    pool.enqueue([key, value, type] (){
+                        MemCache_getTracing(key.c_str(), value.c_str(), 0, type | static_cast<int>(TraceType::NativeGet));
+                    });
+                }
                 return value;
             }
         } else if constexpr (std::is_same_v<T, std::vector<std::uint8_t>>) {
@@ -365,6 +401,11 @@ optional<T> MemCache::get(const std::string &key) {
                 int size = sqlite3_column_bytes(stmt, 1);
                 auto value = std::vector<std::uint8_t>(reinterpret_cast<const std::uint8_t *>(blob),
                                                        reinterpret_cast<const std::uint8_t *>(blob) + size);
+                if (tracing_get) {
+                    pool.enqueue([key, value, type] (){
+                        MemCache_getTracing(key.c_str(), value.data(), value.size(), type | static_cast<int>(TraceType::NativeGet));
+                    });
+                }
                 return value;
             }
         } else {
@@ -374,6 +415,33 @@ optional<T> MemCache::get(const std::string &key) {
         return nullopt;
     }
 }
+
+int MemCache::tracing(const std::string &key, TraceType type) {
+    constexpr auto minTracingType = 1 << 4;
+    auto typeInt = static_cast<int>(type);
+    if (typeInt < minTracingType) {
+        return -1;
+    }
+    auto stmt = prepareStatements(StmtType::value_tracing, db);
+    sqlite3_reset(stmt);
+    sqlite3_bind_int(stmt, 1, static_cast<int>(type));
+    sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
+    return sqlite3_step(stmt);
+}
+
+int MemCache::remove_tracing(const std::string &key, TraceType type) {
+    constexpr auto minTracingType = 1 << 4;
+    auto typeInt = static_cast<int>(type);
+    if (typeInt < minTracingType) {
+        return -1;
+    }
+    auto stmt = prepareStatements(StmtType::value_remove_tracing, db);
+    sqlite3_reset(stmt);
+    sqlite3_bind_int(stmt, 1, ~static_cast<int>(type));
+    sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
+    return sqlite3_step(stmt);
+}
+
 
 // Explicit template instantiation for the supported types
 template int MemCache::put<std::string>(const std::string& key, const std::string& value);

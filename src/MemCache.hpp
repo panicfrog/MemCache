@@ -24,6 +24,7 @@
 #include "sqlite3.h"
 #include "optional.hpp"
 #include "StmtWrapper.hpp"
+#include "ThreadPool.hpp"
 
 #if MEM_CACHE_USE_MULTITHREAD
 #include "Connect.hpp"
@@ -32,11 +33,21 @@
 using nonstd::optional;
 using nonstd::nullopt;
 
+extern "C" {
+void MemCache_getTracing(const char *, const void * value, size_t size, int type);
+}
+
 namespace memcache {
 
     enum class StmtType {
-        get, put, delete_value, get_json, put_json, modify_json, query_json, patch_json, delete_json
+        get, put, delete_value, value_tracing, value_remove_tracing, get_json, put_json, modify_json, query_json, patch_json, delete_json
     };
+
+    enum class TraceType {
+        NativeGet = 1 << 4,
+        NativePut = 1 << 5,
+    };
+
 
     template<typename T>
     using is_memcache_value_type = std::disjunction<
@@ -88,9 +99,13 @@ namespace memcache {
 
         int patch_json(const std::string &key, const std::string &patch);
 
+        int tracing(const std::string &key, TraceType type);
+
+        int remove_tracing(const std::string &key, TraceType type);
+
     private:
         MemCache();
-
+        ThreadPool pool{3};
         static sqlite3_stmt *prepareStatements(StmtType type, sqlite3 *db);
 
 #if MEM_CACHE_USE_MULTITHREAD
@@ -109,6 +124,8 @@ namespace memcache {
         thread_local static std::unique_ptr<StmtWrapper> patch_json_stmt;
         thread_local static std::unique_ptr<StmtWrapper> delete_value_stmt;
         thread_local static std::unique_ptr<StmtWrapper> delete_json_stmt;
+        thread_local static std::unique_ptr<StmtWrapper> value_tracing_stmt;
+        thread_local static std::unique_ptr<StmtWrapper> value_remove_tracing_stmt;
 
 #if MEM_CACHE_USE_MULTITHREAD
         thread_local static std::unique_ptr<Connect> db_connect;

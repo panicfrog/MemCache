@@ -39,6 +39,9 @@ extern "C" {
     extern int MemCache_modify_json(const char* key, const char* json_path, const char* value);
     extern int MemCache_patch_json(const char* key, const char* patch);
 
+    extern int MemCache_value_tracing(const char* key, int trace_type);
+    extern int MemCache_remove_tracing(const char* key, int trace_type);
+
 #ifdef __cplusplus
 }
 #endif

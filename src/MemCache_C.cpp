@@ -206,3 +206,22 @@ extern int MemCache_patch_json(const char* key, const char* patch) {
     auto c = MemCache::getInstance();
     return c->patch_json(key, patch);
 }
+
+
+UNUSED
+extern int MemCache_value_tracing(const char* key, int trace_type) {
+    auto ng = static_cast<int>(TraceType::NativeGet);
+    auto np = static_cast<int>(TraceType::NativePut);
+    auto t = (ng & trace_type) | (np & trace_type);
+    auto traceType = static_cast<TraceType>(t);
+    MemCache::getInstance()->tracing(key, traceType);
+}
+
+UNUSED
+extern int MemCache_remove_tracing(const char* key, int trace_type) {
+    auto ng = static_cast<int>(TraceType::NativeGet);
+    auto np = static_cast<int>(TraceType::NativePut);
+    auto t = (ng & trace_type) | (np & trace_type);
+    auto traceType = static_cast<TraceType>(t);
+    MemCache::getInstance()->remove_tracing(key, traceType);
+}

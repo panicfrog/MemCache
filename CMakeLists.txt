@@ -30,7 +30,8 @@ if(IS_ANDROID)
             src/sqlite3/sqlite3.h
             src/main/java/cpp/MemCacheJni.cpp
             src/MemCache_Cpp.cpp
-            src/Connect.hpp)
+            src/Connect.hpp
+            src/ThreadPool.hpp)
 else()
     set(MEMCACHE_SOURCE_CODE
             include/MemCache_C.h
@@ -42,7 +43,8 @@ else()
             src/sqlite3/sqlite3.c
             src/sqlite3/sqlite3.h
             src/MemCache_Cpp.cpp
-            src/Connect.hpp)
+            src/Connect.hpp
+            src/ThreadPool.hpp)
 endif()
 
 if(IS_IOS)

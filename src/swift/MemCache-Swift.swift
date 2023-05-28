@@ -204,6 +204,16 @@ final public class MemCache {
     let cPatch = patch.cString(using: .utf8)
     return MemCache_patch_json(cKey, cPatch)
   }
+ 
+  public func tracing(for key: String, with type: MemCacheTracingOption) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    return MemCache_value_tracing(cKey, type.rawValue)
+  }
+  
+  public func removeTracing(for key: String, with type: MemCacheTracingOption) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    return MemCache_remove_tracing(cKey, type.rawValue)
+  }
 
 }
 
@@ -236,3 +246,103 @@ extension Array where Element == String {
   }
 }
 
+enum MemCacheValueType: Int32 {
+  case intValue    =  1
+  case doubleValue =  2
+  case boolValue   =  3
+  case stringValue =  4
+  case dataValue   =  5
+}
+
+public struct MemCacheTracingOption: OptionSet {
+  public let rawValue: Int32
+  
+  public init(rawValue: Int32) {
+    self.rawValue = rawValue
+  }
+
+  public static let getOption = MemCacheTracingOption(rawValue: 1 << 4)
+  public static let putOption = MemCacheTracingOption(rawValue: 1 << 5)
+}
+
+@inline(__always)
+private func parseType(for type: Int32) -> (MemCacheValueType, MemCacheTracingOption)? {
+  if type < (1 << 4) + 1 {
+    return nil
+  }
+  let vt = type & ~((1 << 4) | (1 << 5))
+
+  guard let valueType = MemCacheValueType(rawValue: vt) else {
+    return nil
+  }
+  
+  let tracingType = MemCacheTracingOption(rawValue: type & ((1 << 4) | (1 << 5)))
+  return (valueType, tracingType)
+}
+
+@_cdecl("MemCache_getTracing")
+public func getTracing(_ key: UnsafePointer<CChar>, _ value: UnsafeRawPointer, size: Int, type: Int32) {
+  guard let (valueType, tracingType) = parseType(for: type) else { return }
+  let _key = String(cString: key)
+  switch valueType {
+  case .stringValue:
+    let _valuePtr = value.assumingMemoryBound(to: CChar.self)
+    let _value = String(cString: _valuePtr)
+    var tracing = "unknow"
+    if tracingType.contains(.putOption) {
+      tracing = "put"
+    } else if tracingType.contains(.getOption) {
+      tracing = "get"
+    }
+    print("\(tracing) \(_key) for string \(_value)")
+    break
+  case .doubleValue:
+    let _valuePtr = value.assumingMemoryBound(to: Double.self)
+    let _value = _valuePtr.pointee
+    var tracing = "unknow"
+    if tracingType.contains(.putOption) {
+      tracing = "put"
+    } else if tracingType.contains(.getOption) {
+      tracing = "get"
+    }
+    print("\(tracing) \(_key) for double \(_value)")
+    break
+  case .intValue:
+    let _valuePtr = value.assumingMemoryBound(to: Int32.self)
+    let _value = _valuePtr.pointee
+    var tracing = "unknow"
+    if tracingType.contains(.putOption) {
+      tracing = "put"
+    } else if tracingType.contains(.getOption) {
+      tracing = "get"
+    }
+    print("\(tracing) \(_key) for int32 \(_value)")
+    break
+  case .boolValue:
+    let _valuePtr = value.assumingMemoryBound(to: Bool.self)
+    let _value = _valuePtr.pointee
+    var tracing = "unknow"
+    if tracingType.contains(.putOption) {
+      tracing = "put"
+    } else if tracingType.contains(.getOption) {
+      tracing = "get"
+    }
+    print("\(tracing) \(_key) for bool \(_value)")
+    break
+  case .dataValue:
+    let data = Data(bytes: value, count: size)
+    var tracing = "unknow"
+    if tracingType.contains(.putOption) {
+      tracing = "put"
+    } else if tracingType.contains(.getOption) {
+      tracing = "get"
+    }
+    if let s = String(data: data, encoding: .utf8) {
+      print("\(tracing) \(_key) for data string \(s)")
+    } else {
+      print("\(tracing) \(_key) for data \(data)")
+    }
+    
+    break
+  }
+}

@@ -76,6 +76,10 @@ namespace memcache {
     int modify_json(const std::string &key, const std::string &json_path, const std::string &value);
 
     int patch_json(const std::string &key, const std::string &patch);
+
+    int value_tracing(const std::string &key, int trace_type);
+
+    int remove_tracing(const std::string &key, int trace_type);
 }
 
 #endif //MEMCACHE_MEMCACH_CPP_HPP
