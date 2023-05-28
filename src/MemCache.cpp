@@ -423,6 +423,22 @@ int MemCache::tracing(const std::string &key, TraceType type) {
         return -1;
     }
     auto stmt = prepareStatements(StmtType::value_tracing, db);
+
+    /*
+     避免在因为没有插入就已经开始tracing的情况下，插入的时候，因为没有记录而无法更新,从而无法通知到用户，
+     所以只要tracing的时候，就先插入一条记录，然后再更新。下次插入的时候就可以就可以正常tracing到数据变更了。
+
+    BEGIN TRANSACTION;
+
+    UPDATE your_table SET type = new_type WHERE key = your_key;
+
+    INSERT INTO your_table (key, type, value)
+    SELECT your_key, new_type, new_value
+    WHERE (SELECT changes() = 0) AND NOT EXISTS (SELECT 1 FROM your_table WHERE key = your_key);
+
+    COMMIT;
+    */
+
     sqlite3_reset(stmt);
     sqlite3_bind_int(stmt, 1, static_cast<int>(type));
     sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
