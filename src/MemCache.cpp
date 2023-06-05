@@ -24,6 +24,7 @@ thread_local std::unique_ptr<StmtWrapper> MemCache::query_json_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::patch_json_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::delete_value_stmt = nullptr;
 thread_local std::unique_ptr<StmtWrapper> MemCache::delete_json_stmt = nullptr;
+thread_local std::unique_ptr<StmtWrapper> MemCache::delete_json_value_stmt = nullptr;
 
 #if MEM_CACHE_USE_MULTITHREAD
 thread_local std::unique_ptr<Connect> MemCache::db_connect = nullptr;
@@ -107,7 +108,7 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
             return query_json_stmt->get();
         case StmtType::modify_json:
             if (!modify_json_stmt) {
-                modify_json_stmt = std::make_unique<StmtWrapper>(db, "UPDATE json_cache SET json = json_set(json, ?, ?) WHERE key = ?;");
+                modify_json_stmt = std::make_unique<StmtWrapper>(db, "UPDATE json_cache SET json = json_set(json, ?, json(?)) WHERE key = ?;");
             }
             return modify_json_stmt->get();
         case StmtType::patch_json:
@@ -115,6 +116,11 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
                 patch_json_stmt = std::make_unique<StmtWrapper>(db, "UPDATE json_cache SET json = (CASE WHEN json_valid(?) THEN json_patch(json, ?) ELSE json END) WHERE key = ?;");
             }
             return patch_json_stmt->get();
+        case StmtType::delete_json_value:
+            if(!delete_json_value_stmt) {
+                delete_json_value_stmt = std::make_unique<StmtWrapper>(db, "UPDATE json_cache SET json = json_remove(json, ?) WHERE key = ?;");
+            }
+            return delete_json_value_stmt->get();
     }
 }
 
@@ -179,8 +185,10 @@ optional<std::string>  MemCache::query_json(const std::string& key, const std::s
     sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
     std::string value;
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        return value;
+        if (sqlite3_column_type(stmt, 0) != SQLITE_NULL) {
+            value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            return value;
+        }
     }
     return nullopt;
 }
@@ -207,6 +215,18 @@ int MemCache::patch_json(const std::string& key, const std::string& patch) {
     sqlite3_bind_text(stmt, 1, patch.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, patch.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, key.c_str(), -1, SQLITE_STATIC);
+    auto result = sqlite3_step(stmt);
+    return result;
+}
+
+int MemCache::delete_json_value(const std::string &key, const std::string &json_path) {
+#if MEM_CACHE_USE_MULTITHREAD
+    auto db = get_db();
+#endif
+    auto stmt = prepareStatements(StmtType::delete_json_value, db);
+    sqlite3_reset(stmt);
+    sqlite3_bind_text(stmt, 1, json_path.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
     auto result = sqlite3_step(stmt);
     return result;
 }

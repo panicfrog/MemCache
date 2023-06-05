@@ -35,7 +35,7 @@ using nonstd::nullopt;
 namespace memcache {
 
     enum class StmtType {
-        get, put, delete_value, get_json, put_json, modify_json, query_json, patch_json, delete_json
+        get, put, delete_value, get_json, put_json, modify_json, query_json, patch_json, delete_json, delete_json_value
     };
 
     template<typename T>
@@ -88,6 +88,8 @@ namespace memcache {
 
         int patch_json(const std::string &key, const std::string &patch);
 
+        int delete_json_value(const std::string &key, const std::string &json_path);
+
     private:
         MemCache();
 
@@ -109,6 +111,7 @@ namespace memcache {
         thread_local static std::unique_ptr<StmtWrapper> patch_json_stmt;
         thread_local static std::unique_ptr<StmtWrapper> delete_value_stmt;
         thread_local static std::unique_ptr<StmtWrapper> delete_json_stmt;
+        thread_local static std::unique_ptr<StmtWrapper> delete_json_value_stmt;
 
 #if MEM_CACHE_USE_MULTITHREAD
         thread_local static std::unique_ptr<Connect> db_connect;

@@ -206,3 +206,9 @@ extern int MemCache_patch_json(const char* key, const char* patch) {
     auto c = MemCache::getInstance();
     return c->patch_json(key, patch);
 }
+
+UNUSED
+extern int MemCache_delete_json_value(const char* key, const char* json_path) {
+    auto c = MemCache::getInstance();
+    return c->delete_json_value(key, json_path);
+}

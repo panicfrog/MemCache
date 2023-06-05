@@ -38,6 +38,7 @@ extern "C" {
     extern bool MemCache_query_json(const char* key, const char* json_path, char **value);
     extern int MemCache_modify_json(const char* key, const char* json_path, const char* value);
     extern int MemCache_patch_json(const char* key, const char* patch);
+    extern int MemCache_delete_json_value(const char* key, const char* json_path);
 
 #ifdef __cplusplus
 }

@@ -116,4 +116,9 @@ namespace memcache {
         return MemCache::getInstance()->patch_json(key, patch);
     }
 
+    UNUSED
+    int delete_json_value(const std::string &key, const std::string &json_path) {
+        return MemCache::getInstance()->delete_json_value(key, json_path);
+    }
+
 }
