@@ -205,6 +205,12 @@ final public class MemCache {
     return MemCache_patch_json(cKey, cPatch)
   }
 
+  public func deleteJsonValue(forKey key: String, withPath path: String) -> Int32 {
+    let cKey = key.cString(using: .utf8)
+    let cPath = path.cString(using: .utf8)
+    return MemCache_delete_json_value(cKey, cPath)
+  }
+
 }
 
 enum CStringError: Error {

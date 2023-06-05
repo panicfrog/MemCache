@@ -423,3 +423,15 @@ Java_com_yongping_jmemcache_MemCache_deleteJson(JNIEnv *env, jobject thiz, jlong
     auto result = cache->deleteJson(key_str);
     return result;
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_deleteJsonValue(JNIEnv *env,
+                                                     jobject thiz,
+                                                     jlong native_handle,
+                                                     jstring key,
+                                                     jstring json_path) {
+    auto cache = reinterpret_cast<MemCache*>(native_handle);
+    auto result = cache->delete_json_value(key, json_path);
+    return result;
+}

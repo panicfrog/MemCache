@@ -35,6 +35,7 @@ class MemCache {
     private external fun modifyJson(nativeHandle: Long, key: String, jsonPath: String, value: String): Int
     private external fun patchJson(nativeHandle: Long, key: String, patch: String): Int
     private external fun deleteJson(nativeHandle: Long, key: String): Int
+    private external fun deleteJsonValue(nativeHandle: Long, key: String, jsonPath: String): Int
 
     private val nativeHandle: Long = createNativeInstance()
 
@@ -62,5 +63,6 @@ class MemCache {
     fun modifyJson(key: String, jsonPath: String, value: String): Int = modifyJson(nativeHandle, key, jsonPath, value)
     fun patchJson(key: String, patch: String): Int = patchJson(nativeHandle, key, patch)
     fun deleteJson(key: String): Int = deleteJson(nativeHandle, key)
+    fun deleteJsonValue(key: String, jsonPath: String): Int = deleteJsonValue(nativeHandle, key, jsonPath)
 
 }
