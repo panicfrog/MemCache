@@ -131,7 +131,11 @@ namespace memcache {
         auto np = static_cast<int>(TraceType::NativePut);
         auto t = (ng & trace_type) | (np & trace_type);
         auto traceType = static_cast<TraceType>(t);
-        MemCache::getInstance()->remove_tracing(key, traceType);
+        return MemCache::getInstance()->remove_tracing(key, traceType);
+    }
+    
+    int delete_json_value(const std::string &key, const std::string &json_path) {
+        return MemCache::getInstance()->delete_json_value(key, json_path);
     }
 
 }

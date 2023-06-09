@@ -40,7 +40,7 @@ void MemCache_getTracing(const char * key, const void * value, size_t size, int 
 namespace memcache {
 
     enum class StmtType {
-        get, put, delete_value, value_tracing, value_remove_tracing, get_json, put_json, modify_json, query_json, patch_json, delete_json
+        get, put, delete_value, value_tracing, value_remove_tracing, get_json, put_json, modify_json, query_json, patch_json, delete_json, delete_json_value
     };
 
     enum class TraceType {
@@ -102,6 +102,8 @@ namespace memcache {
         int tracing(const std::string &key, TraceType type);
 
         int remove_tracing(const std::string &key, TraceType type);
+        
+        int delete_json_value(const std::string &key, const std::string &json_path);
 
     private:
         MemCache();
@@ -126,6 +128,7 @@ namespace memcache {
         thread_local static std::unique_ptr<StmtWrapper> delete_json_stmt;
         thread_local static std::unique_ptr<StmtWrapper> value_tracing_stmt;
         thread_local static std::unique_ptr<StmtWrapper> value_remove_tracing_stmt;
+        thread_local static std::unique_ptr<StmtWrapper> delete_json_value_stmt;
 
 #if MEM_CACHE_USE_MULTITHREAD
         thread_local static std::unique_ptr<Connect> db_connect;

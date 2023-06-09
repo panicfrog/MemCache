@@ -179,17 +179,20 @@ auto value = cache->query_json(key, "$.key1");
 REQUIRE(value == "value1");
 
 std::string json_path = "$.key1";
-std::string new_value = "new_value1";
-
+std::string new_value = R"("new_value1")";
 cache->modify_json(key, json_path, new_value);
 auto modified_value = cache->query_json(key, "$.key1");
-REQUIRE(modified_value == new_value);
+REQUIRE(modified_value == "new_value1");
 
 std::string patch = R"({"key3": "value3"})";
 result = cache->patch_json(key, patch);
 REQUIRE(result == SQLITE_DONE);
 auto patch_value = cache->query_json(key, "$.key3");
 REQUIRE(patch_value == "value3");
+
+cache->delete_json_value(key, "$.key1");
+auto delete_value = cache->query_json(key, "$.key1");
+REQUIRE(delete_value == nullopt);
 }
 
 TEST_CASE("Test MemCache JSON delete", "[mem_cache]") {

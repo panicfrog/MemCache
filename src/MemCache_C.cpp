@@ -214,7 +214,7 @@ extern int MemCache_value_tracing(const char* key, int trace_type) {
     auto np = static_cast<int>(TraceType::NativePut);
     auto t = (ng & trace_type) | (np & trace_type);
     auto traceType = static_cast<TraceType>(t);
-    MemCache::getInstance()->tracing(key, traceType);
+    return MemCache::getInstance()->tracing(key, traceType);
 }
 
 UNUSED
@@ -223,5 +223,11 @@ extern int MemCache_remove_tracing(const char* key, int trace_type) {
     auto np = static_cast<int>(TraceType::NativePut);
     auto t = (ng & trace_type) | (np & trace_type);
     auto traceType = static_cast<TraceType>(t);
-    MemCache::getInstance()->remove_tracing(key, traceType);
+    return MemCache::getInstance()->remove_tracing(key, traceType);
+}
+
+UNUSED
+extern int MemCache_delete_json_value(const char* key, const char* json_path) {
+    auto c = MemCache::getInstance();
+    return c->delete_json_value(key, json_path);
 }
