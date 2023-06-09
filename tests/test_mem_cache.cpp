@@ -5,6 +5,7 @@
 #include <catch2/catch.hpp>
 #include "../src/MemCache.hpp"
 #include <thread>
+#include <iostream>
 
 using namespace memcache;
 

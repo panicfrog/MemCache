@@ -86,6 +86,8 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # Add default implement for callback
+    target_compile_definitions(MemCache PRIVATE MOCK_GET_TRACING)
     # Add example
     add_executable(memory_cache_example example.cpp)
     target_link_libraries(memory_cache_example PRIVATE MemCache)

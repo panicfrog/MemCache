@@ -70,6 +70,14 @@ MemCache::~MemCache() {
 }
 #endif
 
+#ifdef MOCK_GET_TRACING
+extern "C" {
+    void MemCache_getTracing(const char * key, const void * value, size_t size, int type) {
+        printf("MemCache_getTracing called with key %s, size %zu, type %d\n", key, size, type);
+    }
+}
+#endif
+
 inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
     switch (type) {
         case StmtType::put:

@@ -34,7 +34,7 @@ using nonstd::optional;
 using nonstd::nullopt;
 
 extern "C" {
-void MemCache_getTracing(const char *, const void * value, size_t size, int type);
+void MemCache_getTracing(const char * key, const void * value, size_t size, int type);
 }
 
 namespace memcache {
