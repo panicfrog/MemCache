@@ -43,11 +43,26 @@ namespace memcache {
         get, put, delete_value, value_tracing, value_remove_tracing, get_json, put_json, modify_json, query_json, patch_json, delete_json, delete_json_value
     };
 
-    enum class TraceType {
-        NativeGet = 1 << 4,
-        NativePut = 1 << 5,
-    };
+    class TraceType {
+    public:
+        typedef int Options;
 
+        const static Options NativeGet = 1 << 4;
+        const static Options NativePut = 1 << 5;
+
+        explicit TraceType(Options options) : _options(options) { }
+
+        inline bool Contains(Options option) const {
+            return (_options & option) != 0;
+        }
+
+        inline Options getRawValue() const {
+            return _options;
+        }
+
+    private:
+        Options _options;
+    };
 
     template<typename T>
     using is_memcache_value_type = std::disjunction<

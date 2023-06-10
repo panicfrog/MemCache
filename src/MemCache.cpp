@@ -1,5 +1,20 @@
 
 #include "MemCache.hpp"
+#include <iostream>
+#include <streambuf>
+
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+//
+//void m_print(const char *msg) {
+//#ifdef ANDROID
+//    android_LogPriority t = ANDROID_LOG_INFO;
+//    __android_log_write(t, "yyp", msg);
+//#else
+//    std::cout << msg << std::endl;
+//#endif
+//}
 
 using nonstd::optional;
 using nonstd::nullopt;
@@ -383,6 +398,7 @@ optional<T> MemCache::get(const std::string &key) {
         constexpr auto _tem = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
         int type = _type & _tem;
         bool tracing_get = _type & static_cast<int>(TraceType::NativeGet);
+        std::cout << "yyp get tracing: " << key << " "<< std::endl;
         if constexpr (std::is_same_v<T, int>) {
             if (type == CACHE_TYPE_INT) {
                 int value = sqlite3_column_int(stmt, 1);
@@ -446,7 +462,7 @@ optional<T> MemCache::get(const std::string &key) {
 
 int MemCache::tracing(const std::string &key, TraceType type) {
     constexpr auto minTracingType = 1 << 4;
-    auto typeInt = static_cast<int>(type);
+    auto typeInt = static_cast<int>(type.getRawValue());
     if (typeInt < minTracingType) {
         return -1;
     }
@@ -468,20 +484,20 @@ int MemCache::tracing(const std::string &key, TraceType type) {
     */
 
     sqlite3_reset(stmt);
-    sqlite3_bind_int(stmt, 1, static_cast<int>(type));
+    sqlite3_bind_int(stmt, 1,typeInt);
     sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
     return sqlite3_step(stmt);
 }
 
 int MemCache::remove_tracing(const std::string &key, TraceType type) {
     constexpr auto minTracingType = 1 << 4;
-    auto typeInt = static_cast<int>(type);
+    auto typeInt = static_cast<int>(type.getRawValue());
     if (typeInt < minTracingType) {
         return -1;
     }
     auto stmt = prepareStatements(StmtType::value_remove_tracing, db);
     sqlite3_reset(stmt);
-    sqlite3_bind_int(stmt, 1, ~static_cast<int>(type));
+    sqlite3_bind_int(stmt, 1, ~typeInt);
     sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
     return sqlite3_step(stmt);
 }

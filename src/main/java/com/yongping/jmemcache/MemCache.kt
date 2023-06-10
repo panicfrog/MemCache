@@ -1,9 +1,16 @@
 package com.yongping.jmemcache
 
+import android.util.Log
+
 class MemCache {
     companion object {
         init {
             System.loadLibrary("MemCache")
+        }
+
+        @JvmStatic
+        fun onTracing(key: String, value: Any, size: Long, type: Int) {
+            Log.i("yyp onTracing", "key: $key, type: $type value: $value")
         }
     }
     external fun nativeMethod(): String;
@@ -36,6 +43,8 @@ class MemCache {
     private external fun patchJson(nativeHandle: Long, key: String, patch: String): Int
     private external fun deleteJson(nativeHandle: Long, key: String): Int
     private external fun deleteJsonValue(nativeHandle: Long, key: String, jsonPath: String): Int
+    private external fun tracing(nativeHandle: Long, key: String, type: Int): Int
+    private external fun removeTracing(nativeHandle: Long, key: String, type: Int): Int
 
     private val nativeHandle: Long = createNativeInstance()
 
@@ -65,4 +74,23 @@ class MemCache {
     fun deleteJson(key: String): Int = deleteJson(nativeHandle, key)
     fun deleteJsonValue(key: String, jsonPath: String): Int = deleteJsonValue(nativeHandle, key, jsonPath)
 
+    fun tracing(key: String, type: MemCacheTracingOption): Int {
+        Log.i("yyp t", "$key, option: ${type.rawValue}")
+        return tracing(nativeHandle, key, type.rawValue)
+    }
+    fun removeTracing(key: String, type: MemCacheTracingOption): Int = removeTracing(nativeHandle, key, type.rawValue)
+
+}
+
+enum class MemCacheTracingOption(val rawValue: Int) {
+    GetOption(1 shl 4),
+    PutOption(1 shl 5);
+
+    companion object {
+        operator fun invoke(vararg options: MemCacheTracingOption): Int {
+            return options.fold(0) { acc, option -> acc or option.rawValue }
+        }
+
+        infix fun Int.has(option: MemCacheTracingOption): Boolean = (this and option.rawValue) != 0
+    }
 }

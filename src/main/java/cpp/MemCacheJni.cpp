@@ -4,8 +4,12 @@
 #include <jni.h>
 #include <string>
 #include "../../../MemCache.hpp"
+//#include <android/log.h>
 
 using namespace memcache;
+
+static JavaVM* g_vm = nullptr;
+static jclass g_MemCacheClass = nullptr;
 
 extern "C"
 JNIEXPORT jstring JNICALL
@@ -16,6 +20,16 @@ Java_com_yongping_jmemcache_MemCache_nativeMethod(JNIEnv *env, jobject thiz) {
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_yongping_jmemcache_MemCache_createNativeInstance(JNIEnv *env, jobject thiz) {
+    // 在这里保存全局JVM引用
+    if (g_vm == nullptr) {
+        // 在这里保存全局JVM引用
+        env->GetJavaVM(&g_vm);
+    }
+
+    if (g_MemCacheClass == nullptr) {
+        jclass cls = env->FindClass("com/yongping/jmemcache/MemCache");
+        g_MemCacheClass = (jclass) env->NewGlobalRef(cls);
+    }
     return reinterpret_cast<jlong>(MemCache::getInstance());
 }
 extern "C"
@@ -438,4 +452,134 @@ Java_com_yongping_jmemcache_MemCache_deleteJsonValue(JNIEnv *env,
     std::string path_str(path_chars);
     auto result = cache->delete_json_value(key_str, path_str);
     return result;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_tracing(JNIEnv *env,
+                                             jobject thiz,
+                                             jlong native_handle,
+                                             jstring key,
+                                             jint type) {
+    auto cache = reinterpret_cast<MemCache*>(native_handle);
+    const char* key_chars = env->GetStringUTFChars(key, nullptr);
+    std::string key_str(key_chars);
+    auto ng = static_cast<int>(TraceType::NativeGet);
+    auto np = static_cast<int>(TraceType::NativePut);
+    auto t = (ng & type) | (np & type);
+    return cache->tracing(key_str, TraceType{t});
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yongping_jmemcache_MemCache_removeTracing(JNIEnv *env,
+                                                   jobject thiz,
+                                                   jlong native_handle,
+                                                   jstring key,
+                                                   jint type) {
+    auto cache = reinterpret_cast<MemCache*>(native_handle);
+    const char* key_chars = env->GetStringUTFChars(key, nullptr);
+    std::string key_str(key_chars);
+    auto ng = static_cast<int>(TraceType::NativeGet);
+    auto np = static_cast<int>(TraceType::NativePut);
+    auto t = (ng & type) | (np & type);
+    return cache->remove_tracing(key_str, TraceType{t});
+}
+
+
+enum MemCacheValueType {
+    stringValue = 0,
+    doubleValue = 1,
+    intValue = 2,
+    boolValue = 3,
+    dataValue = 4
+};
+
+enum MemCacheTracingOption {
+    putOption = 16, // 1 << 4
+    getOption = 32  // 1 << 5
+};
+
+extern "C" {
+void MemCache_getTracing(const char * key, const void * value, size_t size, int type) {
+//                        __android_log_write(ANDROID_LOG_INFO, "yyp", "MemCache_getTracing");
+    bool has_attach_to_jvm = false;
+    JNIEnv* env;
+    if (g_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        jint res = g_vm->AttachCurrentThread(&env, nullptr);
+        if (res == JNI_ERR) {
+            return;
+        } else {
+            has_attach_to_jvm = true;
+        }
+    }
+    if (g_MemCacheClass != nullptr) {
+        jfieldID companionFieldID = env->GetStaticFieldID(g_MemCacheClass, "Companion", "Lcom/yongping/jmemcache/MemCache$Companion;");
+        jobject companionObj = env->GetStaticObjectField(g_MemCacheClass, companionFieldID);
+        if (companionObj != nullptr) {
+            jmethodID mid = env->GetMethodID(env->GetObjectClass(companionObj), "onTracing", "(Ljava/lang/String;Ljava/lang/Object;JI)V");
+            if (mid != nullptr) {
+                jstring jKey = env->NewStringUTF(key);
+
+                // 解析type参数
+                auto valueType = static_cast<MemCacheValueType>(type & ~((1 << 4) | (1 << 5)));
+//            auto tracingOption = static_cast<MemCacheTracingOption>(type & ((1 << 4) | (1 << 5)));
+
+                // 根据不同的类型创建相应的jobject
+                jobject jValue;
+                switch (valueType) {
+                    case stringValue: {
+                        jValue = env->NewStringUTF(static_cast<const char *>(value));
+                    }
+                        break;
+                    case doubleValue: {
+                        jclass doubleCls = env->FindClass("java/lang/Double");
+                        jmethodID doubleConstructor = env->GetMethodID(doubleCls, "<init>", "(D)V");
+                        jValue = env->NewObject(doubleCls, doubleConstructor,
+                                                *(static_cast<const double *>(value)));
+                        env->DeleteLocalRef(doubleCls);
+                    }
+                        break;
+                    case intValue: {
+                        jclass integerCls = env->FindClass("java/lang/Integer");
+                        jmethodID integerConstructor = env->GetMethodID(integerCls, "<init>",
+                                                                        "(I)V");
+                        jValue = env->NewObject(integerCls, integerConstructor,
+                                                *(static_cast<const int *>(value)));
+                        env->DeleteLocalRef(integerCls);
+                    }
+                        break;
+                    case boolValue: {
+                        jclass booleanCls = env->FindClass("java/lang/Boolean");
+                        jmethodID booleanConstructor = env->GetMethodID(booleanCls, "<init>",
+                                                                        "(Z)V");
+                        jValue = env->NewObject(booleanCls, booleanConstructor,
+                                                *(static_cast<const bool *>(value)));
+                        env->DeleteLocalRef(booleanCls);
+                    }
+                        break;
+                    case dataValue: {
+                        if (size > static_cast<size_t>(std::numeric_limits<jsize>::max())) {
+                            // TODO: size 太大，无法转换为 jsize
+                            return;
+                        }
+                        jbyteArray byteArray = env->NewByteArray(size);
+                        env->SetByteArrayRegion(byteArray, 0, size,
+                                                static_cast<const jbyte *>(value));
+                        jValue = byteArray;
+                    }
+                        break;
+                }
+                env->CallVoidMethod(companionObj, mid, jKey, jValue, static_cast<jlong>(size), type);
+
+                env->DeleteLocalRef(jKey);
+                env->DeleteLocalRef(jValue);
+                if (has_attach_to_jvm) {
+                    g_vm->DetachCurrentThread();
+                }
+            }
+        }
+    }
+}
 }
