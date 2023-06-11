@@ -1,6 +1,16 @@
 package com.yongping.jmemcache
 
 import android.util.Log
+import com.yongping.jmemcache.MemCacheTracingOption.Companion.has
+
+sealed class MemCacheValueType {
+    class Int(val value: kotlin.Int): MemCacheValueType()
+    class Double(val value: kotlin.Double): MemCacheValueType()
+    class Boolean(val value: kotlin.Boolean): MemCacheValueType()
+    class String(val value: kotlin.String): MemCacheValueType()
+    class BytesArray(val value: ByteArray) : MemCacheValueType()
+}
+
 
 class MemCache {
     companion object {
@@ -10,7 +20,44 @@ class MemCache {
 
         @JvmStatic
         fun onTracing(key: String, value: Any, size: Long, type: Int) {
-            Log.i("yyp onTracing", "key: $key, type: $type value: $value")
+            val allOptions = MemCacheTracingOption.GetOption.rawValue or MemCacheTracingOption.PutOption.rawValue
+            val valueType = allOptions.inv() and type
+            if (valueType < 1 || valueType > 5) {
+                return
+            }
+            var _value: MemCacheValueType? = null
+            when (valueType) {
+                1 -> if (value is Int)  { // int
+                       _value = MemCacheValueType.Int(value)
+                   }
+                2 -> if (value is Double) { // double
+                    _value = MemCacheValueType.Double(value)
+                }
+                3 -> if (value is Boolean) { // bool
+                    _value = MemCacheValueType.Boolean(value)
+                }
+                4 -> if (value is String){ // string
+                    _value = MemCacheValueType.String(value)
+                }
+                5 -> if (value is ByteArray) { // byteArray
+                    _value = MemCacheValueType.BytesArray(value)
+                }
+                else -> {
+                    throw java.lang.UnsupportedOperationException()
+                }
+            }
+            _value?.let { _value ->
+                val _type: MemCacheTracingOption? = if (type.has(MemCacheTracingOption.GetOption)) {
+                    MemCacheTracingOption.GetOption
+                } else if (type.has(MemCacheTracingOption.PutOption)) {
+                    MemCacheTracingOption.PutOption
+                } else {
+                    null
+                }
+                _type?.let {_type ->
+                    Log.i("yyp", "onTracing key: $key, type: $_type, size: $size value: $value")
+                }
+            }
         }
     }
     external fun nativeMethod(): String;
@@ -94,3 +141,4 @@ enum class MemCacheTracingOption(val rawValue: Int) {
         infix fun Int.has(option: MemCacheTracingOption): Boolean = (this and option.rawValue) != 0
     }
 }
+

@@ -1,11 +1,11 @@
 
 #include "MemCache.hpp"
 #include <iostream>
-#include <streambuf>
-
-#ifdef ANDROID
-#include <android/log.h>
-#endif
+//#include <streambuf>
+//
+//#ifdef ANDROID
+//#include <android/log.h>
+//#endif
 //
 //void m_print(const char *msg) {
 //#ifdef ANDROID
@@ -48,6 +48,7 @@ thread_local std::unique_ptr<Connect> MemCache::db_connect = nullptr;
 #endif
 
 MemCache::MemCache() {
+//m_print("------------------ 创建了 ------------------ 10");
 #if MEM_CACHE_USE_MULTITHREAD
     int rc = sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
     auto db = get_db();
@@ -98,7 +99,7 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
     switch (type) {
         case StmtType::put:
             if (!put_stmt) {
-                put_stmt = std::make_unique<StmtWrapper>(db, "INSERT OR REPLACE INTO cache (key, type, value) VALUES (?, ?, ?);");
+                put_stmt = std::make_unique<StmtWrapper>(db, "INSERT INTO cache (key, type, value) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET type = excluded.type | type, value = excluded.value WHERE (cache.type & 15) = (excluded.type & 15) RETURNING type");
             }
             return put_stmt->get();
         case StmtType::get:
@@ -366,6 +367,36 @@ int MemCache::put(const std::string &key, const T &value) {
     }
 
     int result = sqlite3_step(stmt);
+    if (SQLITE_ROW == result) {
+        int t = sqlite3_column_int(stmt, 0);
+        bool traced_put = static_cast<int>(TraceType::NativePut) & t;
+        if (traced_put) {
+            constexpr auto _op = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
+            int type = t & _op;
+            if constexpr (std::is_same_v<T, int>) {
+                pool.enqueue([key, value, type] (){
+                    MemCache_getTracing(key.c_str(), &value, 0, type | static_cast<int>(TraceType::NativePut));
+                });
+            } else if constexpr (std::is_same_v<T, double>) {
+                pool.enqueue([key, value, type] (){
+                    MemCache_getTracing(key.c_str(), &value, 0, type | static_cast<int>(TraceType::NativePut));
+                });
+            } else if constexpr (std::is_same_v<T, bool>) {
+                pool.enqueue([key, value, type] (){
+                    MemCache_getTracing(key.c_str(), &value, 0, type | static_cast<int>(TraceType::NativePut));
+                });
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                pool.enqueue([key, value, type] (){
+                    MemCache_getTracing(key.c_str(), value.c_str(), 0, type | static_cast<int>(TraceType::NativePut));
+                });
+            } else if constexpr (std::is_same_v<T, std::vector<std::uint8_t>>) {
+                pool.enqueue([key, value, type] (){
+                    MemCache_getTracing(key.c_str(), value.data(), value.size(), type | static_cast<int>(TraceType::NativePut));
+                });
+            }
+        }
+    }
+
 //    assert(result == SQLITE_DONE);
     return  result;
 }
@@ -378,8 +409,8 @@ optional<T> MemCache::get(const std::string &key) {
     auto stmt = prepareStatements(StmtType::get, db);
     sqlite3_reset(stmt);
     sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
-    auto tem = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
-    sqlite3_bind_int(stmt, 2, tem);
+    auto tracingOp = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
+    sqlite3_bind_int(stmt, 2, tracingOp);
     if constexpr (std::is_same_v<T, int>) {
         sqlite3_bind_int(stmt, 3, CACHE_TYPE_INT);
     } else if constexpr (std::is_same_v<T, double>) {
@@ -395,8 +426,8 @@ optional<T> MemCache::get(const std::string &key) {
     auto result = sqlite3_step(stmt);
     if (result == SQLITE_ROW) {
         int _type = sqlite3_column_int(stmt, 0);
-        constexpr auto _tem = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
-        int type = _type & _tem;
+        constexpr auto _op = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
+        int type = _type & _op;
         bool tracing_get = _type & static_cast<int>(TraceType::NativeGet);
         std::cout << "yyp get tracing: " << key << " "<< std::endl;
         if constexpr (std::is_same_v<T, int>) {

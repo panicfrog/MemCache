@@ -489,11 +489,11 @@ Java_com_yongping_jmemcache_MemCache_removeTracing(JNIEnv *env,
 
 
 enum MemCacheValueType {
-    stringValue = 0,
-    doubleValue = 1,
-    intValue = 2,
-    boolValue = 3,
-    dataValue = 4
+    intValue    = 1,
+    doubleValue = 2,
+    boolValue   = 3,
+    stringValue = 4,
+    dataValue   = 5
 };
 
 enum MemCacheTracingOption {
@@ -525,13 +525,11 @@ void MemCache_getTracing(const char * key, const void * value, size_t size, int 
                 // 解析type参数
                 auto valueType = static_cast<MemCacheValueType>(type & ~((1 << 4) | (1 << 5)));
 //            auto tracingOption = static_cast<MemCacheTracingOption>(type & ((1 << 4) | (1 << 5)));
-
                 // 根据不同的类型创建相应的jobject
                 jobject jValue;
                 switch (valueType) {
-                    case stringValue: {
+                    case stringValue:
                         jValue = env->NewStringUTF(static_cast<const char *>(value));
-                    }
                         break;
                     case doubleValue: {
                         jclass doubleCls = env->FindClass("java/lang/Double");
@@ -564,6 +562,9 @@ void MemCache_getTracing(const char * key, const void * value, size_t size, int 
                             // TODO: size 太大，无法转换为 jsize
                             return;
                         }
+//                        char lstr[64] = { 0 };
+//                        snprintf(lstr, sizeof(lstr)-1, "datavalue size=%d, key=%s", size, key);
+//                        __android_log_write(ANDROID_LOG_INFO, "yyp", lstr);
                         jbyteArray byteArray = env->NewByteArray(size);
                         env->SetByteArrayRegion(byteArray, 0, size,
                                                 static_cast<const jbyte *>(value));
