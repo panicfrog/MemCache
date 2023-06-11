@@ -99,7 +99,7 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
     switch (type) {
         case StmtType::put:
             if (!put_stmt) {
-                put_stmt = std::make_unique<StmtWrapper>(db, "INSERT INTO cache (key, type, value) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET type = excluded.type | type, value = excluded.value WHERE (cache.type & 15) = (excluded.type & 15) RETURNING type");
+                put_stmt = std::make_unique<StmtWrapper>(db, "INSERT INTO cache (key, type, value) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET type = excluded.type | type, value = excluded.value WHERE WHERE (cache.type = 0) OR ((cache.type & 15) = (excluded.type & 15)) RETURNING type;");
             }
             return put_stmt->get();
         case StmtType::get:
@@ -144,6 +144,8 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
             return patch_json_stmt->get();
         case StmtType::value_tracing:
             if (!value_tracing_stmt) {
+                // TODO: 避免在因为没有插入就已经开始tracing的情况下，插入的时候，因为没有记录而无法更新,从而无法通知到用户，所以只要tracing的时候，就先插入一条记录，然后再更新。下次插入的时候就可以就可以正常tracing到数据变更了。
+                // INSERT INTO your_table (key, type, value) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET type = ? | type;
                 value_tracing_stmt = std::make_unique<StmtWrapper>(db, "UPDATE cache SET type = type | ? WHERE key = ?;");
             }
             return value_tracing_stmt->get();
