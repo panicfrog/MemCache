@@ -122,7 +122,6 @@ class MemCache {
     fun deleteJsonValue(key: String, jsonPath: String): Int = deleteJsonValue(nativeHandle, key, jsonPath)
 
     fun tracing(key: String, type: MemCacheTracingOption): Int {
-        Log.i("yyp t", "$key, option: ${type.rawValue}")
         return tracing(nativeHandle, key, type.rawValue)
     }
     fun removeTracing(key: String, type: MemCacheTracingOption): Int = removeTracing(nativeHandle, key, type.rawValue)

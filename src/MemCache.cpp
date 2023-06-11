@@ -1,8 +1,8 @@
 
 #include "MemCache.hpp"
-#include <iostream>
+//#include <iostream>
 //#include <streambuf>
-//
+
 //#ifdef ANDROID
 //#include <android/log.h>
 //#endif
@@ -48,7 +48,7 @@ thread_local std::unique_ptr<Connect> MemCache::db_connect = nullptr;
 #endif
 
 MemCache::MemCache() {
-//m_print("------------------ 创建了 ------------------ 10");
+//m_print("------------------ 创建了 ------------------ 13");
 #if MEM_CACHE_USE_MULTITHREAD
     int rc = sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
     auto db = get_db();
@@ -99,7 +99,7 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
     switch (type) {
         case StmtType::put:
             if (!put_stmt) {
-                put_stmt = std::make_unique<StmtWrapper>(db, "INSERT INTO cache (key, type, value) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET type = excluded.type | type, value = excluded.value WHERE WHERE (cache.type = 0) OR ((cache.type & 15) = (excluded.type & 15)) RETURNING type;");
+                put_stmt = std::make_unique<StmtWrapper>(db, "INSERT INTO cache (key, type, value) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET type = excluded.type | type, value = excluded.value WHERE ((cache.type & 15) = 0) OR ((cache.type & 15) = (excluded.type & 15)) RETURNING type;");
             }
             return put_stmt->get();
         case StmtType::get:
@@ -144,9 +144,7 @@ inline sqlite3_stmt* MemCache::prepareStatements(StmtType type, sqlite3 *db) {
             return patch_json_stmt->get();
         case StmtType::value_tracing:
             if (!value_tracing_stmt) {
-                // TODO: 避免在因为没有插入就已经开始tracing的情况下，插入的时候，因为没有记录而无法更新,从而无法通知到用户，所以只要tracing的时候，就先插入一条记录，然后再更新。下次插入的时候就可以就可以正常tracing到数据变更了。
-                // INSERT INTO your_table (key, type, value) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET type = ? | type;
-                value_tracing_stmt = std::make_unique<StmtWrapper>(db, "UPDATE cache SET type = type | ? WHERE key = ?;");
+                value_tracing_stmt = std::make_unique<StmtWrapper>(db, "INSERT INTO cache (key, type, value) VALUES (?, ?, 0) ON CONFLICT(key) DO UPDATE SET type = excluded.type | cache.type;");
             }
             return value_tracing_stmt->get();
         case StmtType::value_remove_tracing:
@@ -431,7 +429,9 @@ optional<T> MemCache::get(const std::string &key) {
         constexpr auto _op = ~(static_cast<int>(TraceType::NativeGet) | static_cast<int>(TraceType::NativePut));
         int type = _type & _op;
         bool tracing_get = _type & static_cast<int>(TraceType::NativeGet);
-        std::cout << "yyp get tracing: " << key << " "<< std::endl;
+//        char lstr[64] = { 0 };
+//        snprintf(lstr, sizeof(lstr)-1, "MemCache::get , key=%s, tracing_op: %d, type: %d", key.c_str(), tracing_get, _type);
+//        m_print(lstr);
         if constexpr (std::is_same_v<T, int>) {
             if (type == CACHE_TYPE_INT) {
                 int value = sqlite3_column_int(stmt, 1);
@@ -517,9 +517,13 @@ int MemCache::tracing(const std::string &key, TraceType type) {
     */
 
     sqlite3_reset(stmt);
-    sqlite3_bind_int(stmt, 1,typeInt);
-    sqlite3_bind_text(stmt, 2, key.c_str(), -1, SQLITE_STATIC);
-    return sqlite3_step(stmt);
+    sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 2, typeInt);
+    int result = sqlite3_step(stmt);
+//    char lstr[64] = { 0 };
+//    snprintf(lstr, sizeof(lstr)-1, "new MemCache::tracing , key=%s, result: %d", key.c_str(), result);
+//    m_print(lstr);
+    return result;
 }
 
 int MemCache::remove_tracing(const std::string &key, TraceType type) {
